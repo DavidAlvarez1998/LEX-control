@@ -1,0 +1,23 @@
+change: client-role-based-nav
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  access_model: rolempresa-or-admin # nav + page guards by RolEmpresa; esAdminEmpresa always sees all
+  page_map: clientes=COMERCIAL,procesos=JURIDICO,contable+facturacion=CONTABLE,servicios+equipo=adminOnly
+  roles_in_session: login-returns-roles # user.roles added to login response + AuthUser; requires re-login after deploy
+  crash_fix: contable-lookups-gated # /contable skips lookups unless admin/CONTABLE (was uncaught 403 crash)
+  authority: api-still-enforces # requirePermiso unchanged; UI is convenience + redirect, not the gate
+phases:
+  explore: done
+  propose: done
+  design: done # captured in proposal (small change)
+  spec: done
+  tasks: done
+  apply: done
+  verify: done # API build + 221 tests; client next build; LIVE smoke OK (admin / multi-role abogado1 / juridico-only → 200·403 as designed)
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Sequel to client-equipo-roles. Fixes the reported runtime crash (ApiError "No autorizado" on
+  /contable for a non-admin JURIDICO+COMERCIAL user) AND wires the portal to RolEmpresa so each role
+  sees/reaches only its modules. IMPORTANT: existing sessions must re-login to get user.roles.
+next: runtime smoke (re-login per role), then archive both client-equipo-roles + this change.

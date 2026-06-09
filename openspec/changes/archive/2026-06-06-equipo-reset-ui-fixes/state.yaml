@@ -1,0 +1,23 @@
+change: equipo-reset-ui-fixes
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  reset_endpoint: reuse-activation # reset password reuses POST /mi-empresa/usuarios/:id/activation (no new endpoint)
+  reset_self: excluded # the empresa admin cannot reset their own password (would revoke their own session)
+  confirmations: in-app-modal # ConfirmDialog instead of window.confirm, matching clientes screen
+  scope: frontend-only # no API / Prisma / backend behavior change
+phases:
+  explore: done (inline)
+  propose: done
+  spec: delta (empresa-team UI requirement)
+  design: folded-into-proposal
+  tasks: done
+  apply: done # 3 files: equipo, admin usuarios modal, admin catalogo-procesos
+  verify: tsc clean; manual browser smoke pending
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Backend unchanged — the /activation endpoint already regenerated the link and revoked the
+  session (empresa-team "Resend Activation Link" requirement). Today only surfaces it in the UI
+  for activated members and switches confirmations to portal modals. The two admin fixes
+  (dark-mode contrast on Usuarios modal, button layout on Catálogo de procesos) are pure visual.
+next: archive

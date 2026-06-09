@@ -1,0 +1,25 @@
+change: api-foundation
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  framework: express
+  runtime: tsx (dev) + tsc/node (prod)
+  module_system: commonjs
+  first_resource: servicio
+  auth_in_scope: true
+  empresas_policy: admin-only # all /empresas routes require ADMIN (pending product confirmation for USUARIO self-view)
+phases:
+  explore: done
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: done # foundation + servicios + empresas CRUD + AUTH + tests
+  verify: done # tsc build clean; 45 tests passing (auth/servicios/empresas/usuarios)
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  .env present (user added: DATABASE_URL/PORT/JWT_SECRET/CORS_ORIGINS); .env.example pending (write-denied, content handed to user).
+  Routes protected: servicios writes=ADMIN, empresas=ADMIN (all). service-management spec
+  updated to reflect the richer Servicio model (precioPorUnidad/unidad/incluidos).
+  Remaining: confirm empresas authorization policy with product; optional CLAUDE.md run/seed notes.
+next: archive (after empresas-policy confirmation)

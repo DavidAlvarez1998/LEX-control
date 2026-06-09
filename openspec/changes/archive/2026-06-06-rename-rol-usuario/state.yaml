@@ -1,0 +1,21 @@
+change: rename-rol-usuario
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  new_value: USUARIO (was CLIENTE)
+  reason: CLIENTE meant "person in a company"; frees "Cliente" for a future business entity
+  ui_access_model: within a company → Usuario | Administrador (esAdminEmpresa); ADMIN is platform-only
+  timing: done while DB had 0 rows using the value (zero-cost migration)
+phases:
+  explore: done (inline)
+  propose: done
+  spec: folded-into-proposal
+  design: folded-into-proposal
+  tasks: done
+  apply: done
+  verify: done # 51 tests; API + both fronts tsc clean; live smoke OK
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Canonical specs/ and non-archived changes swept to USUARIO; changes/archive/* left as
+  historical record. Future "Cliente" (empresa's own customers) is a separate entity.
+next: archive

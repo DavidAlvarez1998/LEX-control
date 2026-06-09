@@ -1,0 +1,99 @@
+change: contable-module
+artifact_store: openspec
+execution_mode: interactive
+
+# Key decisions (proposed; mirror the consolidated design)
+decisions:
+  anchor: reuse-cliente-proceso-no-redefine # Cliente/Proceso are anchors; only virtual back-relations, no columns/enum changes
+  satellite_idiom: empresaid-denormalized-no-fk-plus-one-cascade-root # every table: empresaId plain indexed column WITHOUT FK; exactly ONE Cascade FK (its true root); every other ref a scalar NO-FK app-validated by assertSameEmpresa
+  cascade_discipline: single-cascade-root-per-table # errno-150: Ingreso->Cliente, Cartera->Cliente, CajaMenorMovimiento->CajaMenor; Egreso/Nomina/ServicioFijo/CuentaBancaria/CajaMenor are tenant-scoped leaves with NO Cascade FK
+  money_precision: decimal-14-2 # money fields Decimal(14,2) to match Proceso.cuantiaValor; percentages Decimal(5,2)
+  files: inline-soporte-url-strings # *Url String? columns only (URLs); no upload infra; DocumentoContable reserved-name only
+  derive_doctrine: derive-everywhere-no-scheduler # saldoActual/saldoRestante/valorPagado/saldoPendiente/totalIngresosMes/utilidadNeta computed in read/serializer, NEVER persisted; matches comercial-alertas + saldoPendiente placeholder; no cron
+  cartera_shape: thin-head-derived-money-maintained-label # Cartera HEAD per cobro plan; valorTotalAcordado snapshot; valorPagado/saldoPendiente DERIVED; estadoCartera the ONE maintained label (recomputed on Ingreso write, indexable)
+  cartera_grain: per-contrato-head # @unique contratoId + @unique configuracionCobroId; procesoId an attribute, not the grain (matches 1:1 ConfiguracionCobro<->ContratoComercial spine)
+  valor_total_acordado: snapshot-plus-resync # frozen SNAPSHOT at cartera-open (mirrors cobroSnapshot immutability) + explicit re-sync action; plan edits never silently move the agreed total
+  comercial_boundary: read-only-never-write # ConfiguracionCobro/ContratoComercial are READ-only join sources; contable becomes authoritative for saldoPendiente but NEVER writes comercial
+  modalidad_cobro: reuse-comercial-closed-enum # Cartera.tipoCobro REUSES ModalidadCobro; NOT redefined
+  nomina_staff: scalar-empleadoid-plus-snapshot # empleadoId String? NO FK (-> Usuario.id today, future Empleado.id later) + required nombreEmpleado/cargo/tipoVinculacion snapshot; NO contable Empleado entity (login-less/seat-free staff)
+  expense_doctrine: four-tables-summed-separately-no-settling-egreso # Egreso/Nomina/CajaMenorMovimiento/ServicioFijo INDEPENDENT; summed SEPARATELY; Egreso holds only costs not in a typed table; NO settling-Egreso emission (avoids double-count)
+  ingreso_plan_linkage: prefer-configcobroid-fallback-cliente-proceso # contract income joins on configuracionCobroId, falls back to clienteId(+procesoId); general income (configCobroId null) INCLUDED in totalIngresosMes, EXCLUDED from cartera
+  proceso_grouping: groupby-procesoid-radicado-display # totalGastosProceso groups by procesoId (stable); radicado is a display/secondary key (snapshot) to dodge null-radicado drift
+  caja_menor_shape: header-plus-movimiento-cajaid-cascade # CajaMenor header (Cascade root) + CajaMenorMovimiento (cajaId Cascade) — the only satellite-of-satellite; saldo derived (no stored running balance, no race)
+  cuenta_balance: store-saldoinicial-derive-saldoactual # CuentaBancaria stores only saldoInicial; saldoActual derived; CONCILIACION_PENDIENTE manual flag; app Restrict-on-delete while referenced
+  metodo_pago_shared: shared-metodopago-enum # MetodoPago shared by Ingreso.metodoPago/Egreso.medioPago/CajaMenorMovimiento.medioSalida
+  permisos: contable-concrete-claves-lean # concrete contable.* claves, NO wildcards (requirePermiso = exact-clave lookup); seeded via a CONTABLE array (mirrors COMERCIAL array)
+  assign_rbac: contable-cuenta-cartera-reporte-administrador-only # ingreso/egreso/nomina/cajamenor/serviciofijo = [ADMINISTRADOR, CONTABLE]; cuenta config, cartera gestion, reporte = [ADMINISTRADOR] (soloAdmin)
+  module_gate: contable-esbaseline-false-already-seeded # contable Modulo esBaseline=false → 403 "Módulo no contratado" if not contracted; esAdminEmpresa does NOT bypass
+  ddl_mechanism: db-push # repo uses `prisma db push` (no migrations dir); additive + `pnpm generate`; rollback = manual DROP. NOT `prisma migrate dev`
+  tenancy: empresaid-from-token-hard-where-assertsameempresa # exactly like clientes.router.ts / comercial.router.ts
+
+# Phases (PROPOSAL — analysis/design done, NOT applied)
+phases:
+  explore: done
+  propose: done
+  spec: done # contable-ingresos, contable-egresos, contable-nomina, contable-cajamenor, contable-serviciosfijos, contable-cuentas, contable-cartera, contable-reportes
+  tasks: done
+  design: done
+  apply: done # 2026-06-05: schema+seed (P1) + ALL routers mounted at /contable: ingresos(append-only), egresos, nominas, cajas(+movimientos, saldo derived), servicios-fijos, cuentas(saldoActual derived), cartera(open from contrato, total snapshot, saldoPendiente derived, /resync), reportes(monthly P&L derived). Reads ConfiguracionCobro (never writes comercial).
+  verify: done # 146 tests green (9 new contable incl. saldo/cartera/reportes derivations); 8 route groups live (401). Decisions Q1-Q9 confirmed/folded.
+  archive: done # 2026-06-05: 8 contable-* specs merged into openspec/specs/; folder moved to changes/archive/. Re-verified at archive: tsc clean + 158 tests green. REVIEW HIGH (leaf-orphan cascade) RESOLVED in schema — Egreso/Nomina/ServicioFijo/CuentaBancaria/CajaMenor each carry a single empresaId->Empresa Cascade FK (review option (a)), diverging from the proposal's "leaves have NO Cascade FK".
+
+depends_on:
+  - foundations-roles-plans-clientes # Cliente, contable Modulo (esBaseline=false), RolEmpresa.CONTABLE, requirePermiso modulo-gate + RBAC, the COMERCIAL-array seed idiom
+  - comercial-funnel # ContratoComercial (contratos_comerciales), ConfiguracionCobro (configuraciones_cobro plan fields), ModalidadCobro closed enum (REUSED), the saldoPendiente serializer placeholder this change resolves
+  - legal-tramites # Proceso (tramites), radicado (23-digit nullable), @@unique([empresaId, codigoInterno])
+
+# Open questions (each has a recommended answer folded into the proposal + specs; NOT yet confirmed)
+open_questions:
+  Q1_estado_cartera_persistence: store estadoCartera label only (money derived, indexable vencido alert) # recommended
+  Q2_nomina_staff_ref: scalar empleadoId (-> Usuario.id today) + required nombreEmpleado snapshot; NO contable Empleado entity # recommended
+  Q3_cartera_grain: per-contrato head (@unique contratoId + @unique configuracionCobroId); procesoId an attribute # recommended
+  Q4_valor_total_acordado: frozen SNAPSHOT at cartera-open + explicit re-sync action # recommended
+  Q5_expense_aggregation: 4 source tables summed SEPARATELY, NO settling-Egreso, Egreso limited to costs not in typed tables # recommended
+  Q6_ingreso_plan_linkage: prefer configuracionCobroId, fall back to clienteId(+procesoId); general income excluded from cartera # recommended
+  Q7_proceso_grouping: groupBy procesoId; radicado display-only # recommended
+  Q8_caja_menor_shape: CajaMenor header + CajaMenorMovimiento (cajaId Cascade) # recommended
+  Q9_documents: inline soporte*Url for v1; reserve DocumentoContable name # recommended
+
+# Capabilities to be merged into openspec/specs/ on archive (all new; clientes + comercial-contrato-cobro touched additively/read-only — no column/enum changes)
+merged_into_specs:
+  - contable-ingresos: new
+  - contable-egresos: new
+  - contable-nomina: new
+  - contable-cajamenor: new
+  - contable-serviciosfijos: new
+  - contable-cuentas: new
+  - contable-cartera: new
+  - contable-reportes: new
+  # clientes (extended: virtual back-relations ingresos/cartera) and comercial-contrato-cobro
+  # (extended: read-only saldoPendiente backfill via shared contable helper) are touched additively — no column/enum changes.
+
+next: confirm Phase 0 open questions (Q1-Q9, all recommended), then apply Phase 1 (schema + db push + seed CONTABLE concrete claves), routers (Phases 2-4), the cartera saldo-resolution loop (Phase 5), reportes (Phase 6), tests (Phase 7).
+
+notes: |
+  PROPOSAL only — nothing applied. Reuses Cliente/Proceso as anchors and NEVER redefines them (only
+  virtual back-relations: Cliente.ingresos, Cliente.cartera; CajaMenor.movimientos). Every new table
+  carries a denormalized empresaId plain column WITHOUT FK and has exactly ONE Cascade root: Ingreso->
+  Cliente, Cartera->Cliente, CajaMenorMovimiento->CajaMenor; Egreso/Nomina/ServicioFijo/CuentaBancaria/
+  CajaMenor are tenant-scoped leaves with NO Cascade FK; every other ref (procesoId/clienteId/cuentaId/
+  empleadoId/responsableId/registradoPorId/contratoId/configuracionCobroId) is a scalar NO-FK app-
+  validated by assertSameEmpresa (errno-150 discipline). Eight capabilities: contable-ingresos (append-
+  only money received, the input that resolves comercial saldoPendiente), contable-egresos (GENERAL/
+  POR_PROCESO, leaf, no settling-Egreso), contable-nomina (scalar empleadoId + snapshot, no Empleado
+  entity), contable-cajamenor (header + movimiento cajaId Cascade, derived running balance), contable-
+  serviciosfijos (period @unique, vencimiento heuristic), contable-cuentas (bolsas; store saldoInicial,
+  derive saldoActual; Restrict-on-delete), contable-cartera (thin head; snapshot valorTotalAcordado from
+  READ-only ConfiguracionCobro; derive valorPagado/saldoPendiente; maintain only estadoCartera label),
+  and contable-reportes (derived monthly P&L; 4 source tables summed SEPARATELY; no stored rows, no
+  scheduler). DERIVE doctrine is absolute (matches comercial-alertas + the saldoPendiente placeholder);
+  the ONLY maintained column is Cartera.estadoCartera (a derived label recomputed on Ingreso write). The
+  ONE coupling into comercial is READ-ONLY: contable becomes authoritative for saldoPendiente by joining
+  ConfiguracionCobro/ContratoComercial and NEVER writes them; the comercial serializer placeholder MAY be
+  backfilled by a shared contable helper. ModalidadCobro is REUSED, not redefined. Money Decimal(14,2),
+  pct Decimal(5,2). Permisos are concrete contable.* claves (no wildcards) seeded via a CONTABLE array
+  mirroring the COMERCIAL array; RBAC [ADMINISTRADOR, CONTABLE] except cuenta config / cartera gestion /
+  reporte = [ADMINISTRADOR] only. The contable Modulo (esBaseline=false) gate is already in place
+  (esAdminEmpresa does NOT bypass). Tenancy is exactly clientes.router.ts (empresaId from token, hard
+  WHERE, assertSameEmpresa). Additive via `prisma db push` (no migrations dir); no backfill; rollback =
+  manual DROP of the 8 tables + 16 enums (NOT ModalidadCobro).

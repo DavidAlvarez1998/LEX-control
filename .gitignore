@@ -1,0 +1,26 @@
+# dependencies (any project)
+node_modules/
+**/node_modules/
+
+# env / secrets — NEVER commit
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+# build output
+dist/
+**/dist/
+.next/
+**/.next/
+out/
+**/out/
+
+# logs / OS junk
+*.log
+.DS_Store
+
+# tooling local del agente (no va al repo compartido)
+agents/
+

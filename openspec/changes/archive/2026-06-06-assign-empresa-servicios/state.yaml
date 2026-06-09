@@ -1,0 +1,24 @@
+change: assign-empresa-servicios
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  assignment_surface: empresa-endpoints # servicios[] on POST/PATCH /empresas (no separate resource)
+  update_semantics: replace-set-when-present # field present = full desired set; absent = untouched
+  price_defaults: catalog-server-side # omitted fields default to Servicio reference values
+  atomicity: prisma-transaction
+phases:
+  explore: done
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: done # backend schema+router, admin form, tests
+  verify: done # API build clean; 56 tests passing (20 empresas); admin tsc --noEmit clean
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  EmpresaServicio model already exists + pushed (precioBase/precioPorUnidad/incluidos/activo per empresa).
+  Assignments managed only through the empresa resource to fit the single-save admin form.
+  Admin lint shows the pre-existing repo-wide set-state-in-effect baseline (cargar() in useEffect),
+  shared by all dashboard pages — not introduced by this change.
+  Manual runtime verify (admin create/edit empresa with services) still pending.
+next: manual runtime verify, then archive

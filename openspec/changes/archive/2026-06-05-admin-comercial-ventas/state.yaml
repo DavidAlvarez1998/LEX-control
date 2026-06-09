@@ -1,0 +1,37 @@
+change: admin-comercial-ventas
+artifact_store: openspec
+execution_mode: interactive
+
+decisions:
+  audience: platform-self-sales # LEX Control selling Planes to law firms; distinct from comercial-funnel (despacho->cliente)
+  role: new-COMERCIAL-platform-rol # Rol += COMERCIAL (empresaId null staff); requireRole gating, NOT requirePermiso
+  commission_calc: per-comercial-percent-plus-fixed-override # Usuario.porcentajeComision default; montoComisionFijo per-sale override
+  commission_timing: on-win-pending-manual-paid # generated on GANADO, PENDIENTE -> PAGADA by ADMIN (no payments backend)
+  price: negotiable-default-plan-precioMensual # precioVenta editable per sale; commission on negotiated price
+  visibility: assigned-per-comercial # COMERCIAL sees own; ADMIN sees all + assigns
+  on_win: create-empresa-suscripcion-comision-tx # one transaction; empresaId unique + prospectoId unique guard double-win
+  refs: scalar-no-fk-app-validated # plan/comercial refs scalar (repo idiom); only Prospecto.empresaId real FK SetNull
+  ddl: db-push-additive # no migrations dir; rollback = drop prospectos/comisiones + 3 enums + COMERCIAL/porcentajeComision
+  endpoints: /prospectos + /comisiones (+ optional /ventas/reporte)
+
+phases:
+  explore: done # read Usuario/Plan/Suscripcion/Empresa schema + requireRole; conversational product Q&A
+  propose: done
+  spec: done # admin-prospectos, admin-comisiones
+  design: done
+  tasks: done
+  apply: done # 2026-06-05: schema (Rol+COMERCIAL, Usuario.porcentajeComision, Prospecto, Comision, 3 enums) + db push; modules/ventas (prospectos+comisiones routers, win-tx) mounted; login audience opened to platform roles (ADMIN+COMERCIAL); usuarios create/edit extended for COMERCIAL+porcentajeComision; admin UI /prospectos + /comisiones + nav (rol-filtered) + usuarios form.
+  verify: done # API tsc clean + 174 tests green (16 new ventas); admin pnpm build clean (/prospectos, /comisiones); no new lint beyond repo baseline.
+  archive: done # 2026-06-05: tasks.md checkboxes reconciled (all done); 2 new capability specs (admin-prospectos, admin-comisiones) merged verbatim into openspec/specs/; folder moved to changes/archive/2026-06-05-admin-comercial-ventas/. Code was already live (modules/ventas mounted, schema pushed, admin /prospectos + /comisiones).
+
+# Capabilities merged into openspec/specs/ on archive (both new ADDs; no existing spec touched).
+merged_into_specs:
+  - admin-prospectos: new
+  - admin-comisiones: new
+
+next: none (archived). Runtime E2E DONE 2026-06-05 against live DB (19/19 checks: login admin, crear COMERCIAL, activar, login comercial en portal admin [audience fix], crear prospecto scoped, avanzar, PATCH→GANADO 400, ganar→Empresa+Suscripcion+Comision, comisión=10000, doble-ganar 409, comercial no liquida 403, admin PAGADA). Datos de prueba limpiados.
+notes: |
+  Platform-level module (no empresaId tenancy); scoped by assigned comercial. Win converts a prospecto
+  into Empresa + Suscripcion + Comision atomically. Commission = montoComisionFijo override else
+  precioVenta * comercial.porcentajeComision/100, generated PENDIENTE, ADMIN marks PAGADA. Distinct
+  from the client-side comercial-funnel. See design.md.

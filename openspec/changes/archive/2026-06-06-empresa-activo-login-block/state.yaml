@@ -1,0 +1,24 @@
+change: empresa-activo-login-block
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  enforcement_points: login-and-middleware # block at /auth/login AND per-request requireAuth
+  live_sessions: revoked-per-request # middleware re-checks empresa.activo, no tokenVersion bump
+  admin_unaffected: true # ADMIN has no empresa → never blocked
+  error_response: generic-401 # reuse "Credenciales inválidas" / "Token inválido o expirado"
+  deactivation_guard: confirm-alert-on-save # plus inline warning under the checkbox
+phases:
+  explore: done
+  propose: done
+  spec: done
+  tasks: done
+  apply: done
+  verify: done # 83 API tests pass (4 new); admin tsc clean
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Empresa.activo was inert (stored, never read). Now Empresa.activo=false blocks ALL of that
+  company's users at login and revokes their live sessions on the next request (consistent with
+  auth-session-revocation's per-request account-state check). Login already includes empresa
+  (added for the sidebar company name) — just extend the select with activo. Reactivation restores
+  access immediately since both checks read live DB state.
+next: apply backend guards + admin alert, then tests

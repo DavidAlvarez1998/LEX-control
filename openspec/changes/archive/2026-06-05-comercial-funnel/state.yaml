@@ -1,0 +1,88 @@
+change: comercial-funnel
+artifact_store: openspec
+execution_mode: interactive
+
+# Key decisions (proposed; mirror the consolidated design)
+decisions:
+  anchor: reuse-cliente-no-redefine # Cliente is the funnel anchor; only virtual back-relations, no columns/enum changes
+  satellite_idiom: clienteid-cascade-plus-empresaid-no-fk # every satellite: clienteId FK Cascade + empresaId plain indexed column WITHOUT FK
+  cascade_discipline: single-cascade-root-per-satellite # FIX(errno-150): clienteId is the ONLY cascade FK; empresaId denormalized WITHOUT FK (like UsuarioRolEmpresa); ConfiguracionCobro roots on contratoId (clienteId/empresaId no FK); all other FKs SetNull
+  money_precision: decimal-14-2 # FIX: cobro money fields Decimal(14,2) to match Proceso.cuantiaValor (COP overflow at 10,2); percentages stay Decimal(5,2)
+  fase_shape: append-only-history-table # FaseComercialHistorial (fases_comerciales); current = single open row; NOT columns on Cliente (would redefine it)
+  fase_estado_coupling: firmado-perdido-drive-estado-in-tx # FIRMADO -> CLIENTE via /convertir; PERDIDO -> DESCARTADO; same transaction so no drift
+  cobro_shape: two-layer-plan-not-engine # offer on Cotizacion + agreed headline + authoritative 1:1 ConfiguracionCobro; NO payment rows
+  modalidad_cobro: shared-closed-enum # ModalidadCobro closed enum, shared with future contable module
+  contrato_naming: contratocomercial-suffix # CONFIRMED Q1: ContratoComercial, hedge vs future contable Contrato
+  alerts_shape: derived-queries-no-scheduler # 7 indexed read-time queries; no stored alert rows, no cron
+  bridge_shape: single-solicitud-unique-fks # SolicitudAsignacionProceso; contratoId @unique + procesoId @unique; walkable both ways
+  bridge_snapshots: frozen-resumen-cobro # resumenCaso + cobroSnapshot frozen at request time for traceability
+  bridge_legal_write: extract-shared-legal-helpers # FIX: /convertir Litigante upsert + codigoInterno gen + etapaEntrada are INLINE today → EXTRACT to shared services (clientes.router + procesos.router = Modified). Assign tx MUST set ALL required Proceso fields: datos={}, etapaActual=etapaEntrada, jurisdiccion=tipo.jurisdiccion (NOT sugerida), ParteProceso.rol default DEMANDANTE
+  codigo_interno: com-yyyy-nnnn # CONFIRMED Q3: comercial-origin prefix COM-<year>-<NNNN>, sequence per empresa
+  assign_tipo_override: admin-may-override # CONFIRMED Q4: admin can change tipoProcesoId at assign; if null after override → 400 (must pick a tipo that defines etapas)
+  fase_init: lazy # CONFIRMED Q2: first fase row created on first move; foundations clientes router untouched
+  responsable: reuse-cliente-responsablecomercial # CONFIRMED Q6: no extra responsable table; per-row registradoPorId for audit
+  assign_rbac: administrador-only # solicitud.asignar/.rechazar ADMINISTRADOR only; rep must not self-assign
+  permisos: comercial-concrete-claves-lean # CONFIRMED Q5 + FIX: requirePermiso has NO wildcards → gate on CONCRETE claves (comercial.X.{ver,crear,editar}); lean set like cliente.*; firmar folds into .editar, cancelar ADMINISTRADOR-gated
+  ddl_mechanism: db-push # repo uses `prisma db push` (no migrations dir); additive + `pnpm generate`; rollback = manual DROP. NOT `prisma migrate dev`
+  tenancy: empresaid-from-token-hard-where-assertsameempresa # exactly like clientes.router.ts
+
+# Phases (PROPOSAL — analysis/design done, NOT applied)
+phases:
+  explore: done
+  propose: done
+  spec: done # comercial-seguimiento, comercial-fases, comercial-cotizacion, comercial-contrato-cobro, comercial-alertas, comercial-asignacion-procesos
+  tasks: done
+  design: done
+  apply: done # ALL phases 1-5 DONE 2026-06-05: schema+seed; funnel routers (seguimiento/fases/cotizacion/contrato+cobro/alertas); BRIDGE (solicitudes + asignar materializes Proceso+ParteProceso, codigoInterno COM-YYYY-NNNN via extracted procesos.service; reuses clientes.service). Mounted /comercial.
+  verify: done # 137 tests green (17 comercial incl. 6 bridge). Live e2e: solicitud→asignar materialized Proceso COM-2026-0001 ABIERTO + ParteProceso DEMANDANTE(nuestro cliente). Cleanup needs proceso-delete-first (ParteProceso Restrict).
+  archive: done # 2026-06-05. 6 specs merged into openspec/specs/; change moved to changes/archive/
+
+depends_on:
+  - foundations-roles-plans-clientes # Cliente, comercial Modulo, cliente.* RBAC loops, requirePermiso, RolEmpresa, /convertir Litigante upsert
+  - legal-tramites # Proceso (tramites), TipoProceso (+esquemaVersion), EtapaProceso, ParteProceso (+@@unique, esNuestroCliente), Litigante (+@@unique), codigoInterno legal-write rules
+
+merged_into_specs:
+  - comercial-seguimiento: new
+  - comercial-fases: new
+  - comercial-cotizacion: new
+  - comercial-contrato-cobro: new
+  - comercial-alertas: new
+  - comercial-asignacion-procesos: new
+  # clientes (extended: virtual back-relations, reuse estado + /convertir) and tramite-management
+  # (extended: solicitudComercial back-relation on Proceso) are touched additively — no column/enum changes.
+
+# All 6 open questions CONFIRMED with the user 2026-06-05
+confirmed_questions:
+  Q1_contrato_naming: ContratoComercial
+  Q2_fase_init: lazy
+  Q3_codigo_interno: COM-<year>-<NNNN> per empresa  # comercial-origin prefix (was 'MIRAR CON MARITZA')
+  Q4_assign_tipo_override: admin-may-override (null after override → 400)
+  Q5_permiso_granularity: lean concrete claves (no wildcards)
+  Q6_responsable: reuse Cliente.responsableComercialId + per-row registradoPorId
+
+# HIGH review fixes FOLDED into proposal/specs 2026-06-05 (see REVIEW.md Resolution)
+pre_apply_fixes_done:
+  - F1-no-wildcards: specs gate each endpoint on the CONCRETE seeded clave; `comercial.X.*` is shorthand only (requirePermiso = exact-clave lookup)
+  - F2-bridge-required-fields: assign tx sets Proceso.datos={}, etapaActual=etapaEntrada(tipo.etapas).key, jurisdiccion=tipo.jurisdiccion (NOT sugerida), tipoProcesoId resolved (override ?? necesidad; null→400), ParteProceso.rol = sugerido ?? DEMANDANTE
+  - F3-extract-helpers: codigoInterno generator + etapaEntrada + /convertir Litigante upsert are INLINE today → extract to shared services; clientes.router.ts AND procesos.router.ts listed Modified
+  - F4-errno150: every satellite has clienteId as the SINGLE cascade root; empresaId denormalized WITHOUT FK (ConfiguracionCobro roots on contratoId)
+  - F5-money: Decimal(14,2) for cobro money fields; Decimal(5,2) for percentages
+
+next: apply Phase 1 (schema + db push + seed CONCRETE comercial.* permisos), then routers (Phase 2-4), the bridge (Phase 5, codigoInterno=COM-YYYY-NNNN), tests.
+
+notes: |
+  PROPOSAL only — nothing applied. Reuses Cliente as the funnel anchor and NEVER redefines it (only
+  virtual back-relations: faseHistorial, seguimientos, cotizaciones, contratos, solicitudes). Every new
+  table carries clienteId + denormalized empresaId; only Empresa and Cliente cascade in, every
+  cross-module FK is SetNull (errno-150 discipline). Six capabilities: comercial-seguimiento,
+  comercial-fases (append-only history, current = open row, FIRMADO/PERDIDO couple to Cliente.estado in
+  one tx), comercial-cotizacion (offer / FormaPago), comercial-contrato-cobro (contrato + poder doc
+  tracks + authoritative 1:1 ConfiguracionCobro; ModalidadCobro shared with future contable; PLAN not a
+  billing engine), comercial-alertas (7 derived queries, no scheduler/stored rows), and
+  comercial-asignacion-procesos — the bridge that materializes Proceso + Litigante + ParteProceso in one
+  transaction, reusing the /convertir Litigante upsert and the legal codigoInterno/esquemaVersion rules.
+  That assign tx is the ONE place comercial writes into the legal module (flagged; Q3 'MIRAR CON
+  MARITZA'). solicitud.asignar/.rechazar are ADMINISTRADOR-only; everything else ADMINISTRADOR+COMERCIAL,
+  mirroring cliente.*. Tenancy is exactly clientes.router.ts (empresaId from token, hard WHERE,
+  assertSameEmpresa). Additive via `prisma db push` (no migrations dir); no backfill; rollback = manual
+  DROP of the 6 tables + 9 enums.

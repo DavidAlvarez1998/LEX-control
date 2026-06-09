@@ -1,0 +1,21 @@
+change: user-management
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  password_flow: activation-link
+  token_hash: sha256 (raw to admin, hash stored)
+  activation_page_app: lex-control-client (/activar)
+  email_delivery: deferred (manual link share)
+phases:
+  explore: done (inline)
+  propose: done
+  spec: folded-into-design
+  design: done
+  tasks: done
+  apply: done # backend (Batch 1) + admin UI (Batch 2) + client activar (Batch 3) + tests
+  verify: done # 45 tests passing; admin/client tsc clean; API build clean
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Manual e2e (create→activate→login) still pending — needs the stack running and a real
+  ADMIN row (pnpm seed:admin). That is the only open item before archive.
+next: archive (after manual e2e by user)

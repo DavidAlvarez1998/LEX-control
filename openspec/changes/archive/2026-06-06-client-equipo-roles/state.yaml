@@ -1,0 +1,26 @@
+change: client-equipo-roles
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  role_model: multi-role # a member may hold several RolEmpresa at once; access = union (req.rolesEmpresa)
+  roles_purity: pure-no-rbac-change # roles keep their seeded permisos; abogado-que-vende = JURIDICO+COMERCIAL (NOT comercial perms added to JURIDICO)
+  admin_toggle: administrador-role-is-the-toggle # drop standalone esAdminEmpresa checkbox; ADMINISTRADOR role mirrors esAdminEmpresa (authoritative flag unchanged)
+  atomicity: single-tx-create-and-reconcile # POST and PATCH-roles each in one tx; inline seat check (NOT assignRole/removeRole which open own tx) to avoid orphans/partials
+  plan_not_contracted: surfaces-as-cap-0 # role absent from plan => cap 0 => seat gate 409; no special case server-side
+  self_lockout: cannot-remove-own-administrador # 400; mirrors existing cannot-deactivate-self; no last-admin guard (out of scope)
+  schema_change: none # foundations already has enum/join/seat-gate/mirror; this is UI + API wiring only
+phases:
+  explore: done # mapped mi-empresa router/schemas, roles.service (assertSeatAvailable/assignRole/removeRole), entitlements, empresa-team spec, equipo page
+  propose: done
+  design: done
+  spec: done
+  tasks: done
+  apply: done # schemas + POST(multi-role,atomic) + PATCH(reconcile) + GET roles + GET /cupos + /equipo UI (multi-select + Editar roles)
+  verify: done # API build clean + 218 tests (25 in mi-empresa, +10); client next build clean
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Closes the orphaned COMERCIAL/CONTABLE roles in the client portal. Today mi-empresa.router.ts
+  hardcodes ADMINISTRADOR/JURIDICO. Multi-role per user, roles pure, no schema/seed change.
+  Two earlier intermediate picks were SUPERSEDED by the user: single-role -> multi-role; and
+  "add comercial perms to JURIDICO" -> roles stay pure (abogado vende via JURIDICO+COMERCIAL).
+next: apply (schemas -> POST -> PATCH/GET/cupos -> /equipo UI -> tests)

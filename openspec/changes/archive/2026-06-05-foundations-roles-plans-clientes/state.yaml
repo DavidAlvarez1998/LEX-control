@@ -1,0 +1,79 @@
+change: foundations-roles-plans-clientes
+artifact_store: openspec
+execution_mode: interactive
+
+# Key decisions (CONFIRMED with the user 2026-06-05 unless noted)
+decisions:
+  spine: entitlements-driven # Lens 3 wins; one resolveEntitlements(empresaId) feeds module gate + seat gate
+  override_idiom: suscripcion-mirrors-empresaservicio # SuscripcionModulo/SuscripcionCuota parallel the negotiated-price override
+  roles_shape: closed-enum # CONFIRMED: RolEmpresa {ADMINISTRADOR,JURIDICO,CONTABLE,COMERCIAL} stays a closed enum (no custom roles this phase)
+  permisos_shape: seeded-table # Permiso seeded + namespaced under Modulo (like AreaPractica), extensible without migration
+  module_gate_shortcircuit: permiso-under-modulo # disabling a módulo short-circuits all its permisos at once
+  cliente_shape: single-row-lifecycle # one Cliente row, estado PROSPECTO->CLIENTE->DESCARTADO; no copy on conversion
+  cliente_bridge: nullable-litiganteId-setnull # Cliente.litiganteId set on conversion (see REVIEW: needs unique key or soften 'upsert')
+  cascade_discipline: only-empresa-cascades-in # Cliente outgoing FKs all SetNull; UsuarioRolEmpresa two Cascade FKs (errno-150 safe)
+  seat_unit: usuario-rol-empresa-row # a seat = a UsuarioRolEmpresa row
+  seat_freed_by: user-deactivation # CONFIRMED (Q3): a seat is freed when Usuario.activo=false; the COUNT predicate filters activo=true
+  seat_race: lock-parent-row-tx # SELECT FOR UPDATE on the Suscripcion/Empresa row (NOT the role rows — empty-rows race, per REVIEW)
+  admin_authority: esadminempresa-authoritative # CONFIRMED (Q4=A): esAdminEmpresa stays the authority as today; ADMINISTRADOR is its synced module-layer mirror
+  baseline_modulos: esbaseline-flag-in-code # always-on via Modulo.esBaseline; NOT seeded as PlanModulo rows
+  pricing: frozen-cop # CONFIRMED (Q5=B): Plan.precioMensual stored in COP for ALL plans; NO precioEnSmmlv field. bufete_pro holds the current COP value of 1 SMMLV, updated manually by platform ADMIN
+  grandfather_plan: firma # CONFIRMED: existing empresas backfilled onto the 'firma' plan
+  fail_closed_scope: new-endpoints-only # requirePermiso fails closed only on new endpoints; existing auth keeps working pre-backfill
+  ddl_mechanism: db-push # CONFIRMED reality (REVIEW high-1): repo uses `prisma db push` (no prisma/migrations dir). Additive `db push` + `pnpm generate`; rollback = manual DROP of new tables/enums. NOT `prisma migrate dev`.
+
+# Phases (this is a PROPOSAL — analysis/design done, NOT applied)
+phases:
+  explore: done
+  propose: done
+  spec: done # empresa-roles, planes-entitlements, clientes
+  design: done
+  tasks: done
+  apply: done # All phases 1-4 DONE 2026-06-05 (schema+seed+backfill; entitlements engine; roles service + requirePermiso; B2 wiring; clientes CRM module mounted at /clientes).
+  verify: done # 120 tests green; live: backfill correct, seat cap enforced (firma 2nd admin→409), clientes CRUD + module gate + conversion→Litigante. (5.3 ran on the live DEMO DB, not a separate copy.)
+  archive: done # 2026-06-05. Specs merged into openspec/specs/; change moved to changes/archive/
+
+depends_on: [] # builds only on existing schema (empresas, usuarios, legal-tramites litigantes)
+
+merged_into_specs:
+  - empresa-roles: new
+  - planes-entitlements: new
+  - clientes: new
+  # authentication is extended additively (req.rolesEmpresa, requirePermiso, seat gate); existing requirements unchanged.
+
+# Confirmed answers to the original 8 open questions
+confirmed_questions:
+  Q1_roles_shape: closed-enum            # 4 fixed roles, enum
+  Q2_cliente_shape: single-row           # accepted recommendation
+  Q3_seat_freeing: freed-on-deactivation # count only Usuario.activo=true
+  Q4_admin_authority: esadminempresa     # keep esAdminEmpresa as-is; ADMINISTRADOR mirrors it
+  Q5_grandfather_plan: firma
+  Q6_pricing: frozen-cop                 # no SMMLV indexing; manual COP value for bufete_pro
+  Q8_baseline_modulos: esbaseline-flag-in-code
+
+# Still open (non-blocking, can be decided at Phase 1)
+open_questions:
+  - id: Q7
+    topic: Permiso seed granularity
+    detail: Seed only a minimal foundations permission set now (e.g. usuarios.*, cliente.*) and let each module ship its own catalog later, vs seeding the full action vocabulary upfront.
+    recommendation: minimal-foundations-set-now
+
+# MUST be fixed before `apply` (from the adversarial REVIEW.md — high severity)
+pre_apply_blockers:
+  - id: B1-ddl
+    detail: Rewrite the proposal/tasks migration+rollback narrative for a `prisma db push` repo (no migrations dir). Additive db push + generate; rollback = manual DROP. Do NOT run `prisma migrate dev` against the live push-managed DB without baselining first.
+  - id: B2-seat-gate
+    detail: Integrate the seat gate + esAdminEmpresa<->ADMINISTRADOR sync with the EXISTING write paths (usuarios.router POST/PATCH, mi-empresa.router POST/activation). As authored the seat cap is bypassable via current endpoints and the flag drifts. Route member creation / esAdminEmpresa toggles through the seat-gated assignment path, or explicitly scope-out and document the bypass.
+  - id: B3-misc
+    detail: Tighten per REVIEW — empresaId only from req (never client input) in resolveEntitlements/seat-gate/requirePermiso; same-empresa validation on Cliente outgoing FKs; resolve Modulo vs PlanFlag duplication for logo/ia; define cuotas for non-active subscriptions; Litigante needs @@unique or soften 'upsert' to find-or-create.
+
+next: revise proposal/tasks/specs for the 3 pre_apply_blockers, then Phase 1 (db push + seed/backfill)
+
+notes: |
+  PROPOSAL only — nothing applied. Authored by a multi-agent Workflow (explore -> 3-lens design ->
+  judge -> author -> adversarial review). Lens 3 (entitlements-driven) is the spine, grafted with
+  Lens 2's normalized Permiso catalog and single-row Cliente lifecycle; additive-only / JWT-untouched /
+  esAdminEmpresa-preserved discipline honored throughout. Three capabilities: empresa-roles,
+  planes-entitlements, clientes (20 reqs / 55 scenarios). All user-facing open questions CONFIRMED
+  2026-06-05 (see confirmed_questions). Two HIGH review items (db-push DDL, seat-gate integration)
+  plus tightenings are pre_apply_blockers — see REVIEW.md. Pricing is frozen COP (no SMMLV indexing).

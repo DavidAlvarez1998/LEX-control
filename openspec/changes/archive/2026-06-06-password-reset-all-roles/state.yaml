@@ -1,0 +1,22 @@
+change: password-reset-all-roles
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  link_target: role-aware # ADMIN → ADMIN_URL/activar, USUARIO → CLIENT_URL/activar
+  delivery: manual-copy # admin copies the link from the reset modal; email/WhatsApp deferred
+  rejected_temp_password: true # admin would hold a live credential + needs forced-change flow
+  rejected_short_code: deferred # would need email-scoped lookup + short expiry + lockout
+phases:
+  explore: done (inline)
+  propose: done
+  spec: folded-into-proposal
+  design: folded-into-proposal
+  tasks: done
+  apply: done # env + role-aware link + admin /activar page
+  verify: done # 57 tests; API + admin tsc clean; live smoke (USUARIO link host :3001)
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  set-password stays role-agnostic; only the link target follows the user's rol.
+  ADMIN_URL must be added to lex-control-api/.env by the user (.env* is write-denied to the assistant);
+  defaults to http://localhost:3000 if unset. Automatic email delivery is the recommended next step.
+next: archive

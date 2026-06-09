@@ -1,0 +1,36 @@
+change: client-empresa-users
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  surface: mi-empresa-module # add GET/POST /mi-empresa/usuarios (empresa-scoped, token-resolved)
+  authz: requireEmpresaAdmin # already-defined-but-unused middleware; USUARIO + esAdminEmpresa
+  forced_server_side: rol=USUARIO + empresaId=req.empresaId # never from client body (no escalation, no cross-tenant)
+  password: activation-link # reuse user-management flow; return activationUrl (client portal)
+  fields_required: nombre, email # only human-set Usuario fields available (no phone, etc.)
+open_questions:
+  q1_esAdminEmpresa_field: ALLOW # 2026-06-05: empresa admin MAY grant company-admin on create (checkbox)
+  q2_lifecycle_actions: ALL # 2026-06-05: list+create + activate/deactivate + resend activation link
+phases:
+  explore: done # validated Usuario fields, admin /usuarios flow, mi-empresa scoped pattern, client nav/auth
+  propose: done
+  spec: done # core + lifecycle scenarios (Q2=ALL)
+  tasks: done # all phases (1-5) in scope per Q2=ALL
+  design: not-needed # mirrors usuarios.router scoped to req.empresaId; no new architecture
+  apply: done # 2026-06-05 backend + client UI implemented
+  verify: done # pnpm --dir lex-control-api test green (98 tests, 15 new); client tsc clean; live end-to-end curl flow OK
+  archive: done # 2026-06-05. Merged empresa-team (new capability) → openspec/specs/empresa-team; change moved to changes/archive/
+notes: |
+  APPLIED 2026-06-05. An empresa admin (USUARIO + esAdminEmpresa) manages their own company's
+  team from the CLIENT portal (:3001). Endpoints under mi-empresa, guarded by
+  requireAuth+requireRole(USUARIO)+requireEmpresaAdmin; empresa always from req.empresaId:
+    GET    /mi-empresa/usuarios            — list team with derived estado (no secrets)
+    POST   /mi-empresa/usuarios            — create { nombre, email, esAdminEmpresa? }; forces
+                                             rol=USUARIO + empresaId; returns activationUrl
+    PATCH  /mi-empresa/usuarios/:id        — activate/deactivate (updateMany scoped by empresaId;
+                                             deactivate bumps tokenVersion; cannot self-deactivate)
+    POST   /mi-empresa/usuarios/:id/activation — regenerate activation link (revokes session)
+  Shared helpers extracted to modules/usuarios/usuarios.shared.ts (ACTIVATION_TTL_MS, PUBLIC_SELECT,
+  activationUrl, deriveEstado) — reused by usuarios.router.ts and mi-empresa.router.ts. Client:
+  /equipo page + "Equipo" nav item gated on user.esAdminEmpresa (sidebar filter). Tests in
+  tests/mi-empresa-usuarios.test.ts.
+next: archive — fold specs/empresa-team into specs/ baseline and remove the change dir

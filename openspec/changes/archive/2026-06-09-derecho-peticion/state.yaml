@@ -1,0 +1,48 @@
+change: derecho-peticion
+artifact_store: openspec
+execution_mode: interactive
+delivery_strategy: backend-first # the engine (días hábiles + conditional + plazo) is the value; client UX incremental
+decisions:
+  ddp_is_catalog: not-a-module # Derecho de Petición = seeded global TipoProceso (CONSTITUCIONAL), reuses legal-tramites engine verbatim
+  tutela_relation: separate-tipo-casoRelacionado # Acción de Tutela = its own global tipo; DdP links via existing Proceso.casoRelacionadoId/derivados
+  deadlines: business-days-algorithmic # diasHabiles.ts: fixed + Emiliani-Monday + Easter-relative (Meeus); pure on year; unit-tested 2024-2027
+  deadline_storage: proceso-fechaLimite # additive nullable column + index; derived on stage move; manual override not silently clobbered
+  ddp_terms: 15-10-30-habiles # General 15 / Documental 10 / Consulta 30 días hábiles (Ley 1755/2015) via plazo.diasPorValorDe
+  conditional_model: equality-only # mostrarSi/requeridoSi = {campo, igualA}; no AND/OR trees, no arithmetic in v1
+  branching: disponibleSi-guards # value-guarded next-stage availability, not a full BPMN engine
+  escalation: crearDerivado-idempotent # stage accion opens linked Proceso of a target global tipo; unique per (casoRelacionadoId, tipoProcesoId) -> 409
+  validator_shared: client-and-server # one evaluarCondicion/validarDatos; server is source of truth
+  back_compat: additive-json # all new keys optional; types without them behave exactly as today
+  area_practica: constitucional # DdP + Tutela: jurisdiccion CONSTITUCIONAL, areaSlugs ["constitucional"] (seeded área, orden 7)
+  plazo_reconcile: extend-plazoDias # reglas already had plazoDias(int)+resultado+ayuda; EXTEND with plazoDesdeCampo/plazoTipoDias/plazoDiasPorValorDe (derive only when plazoDesdeCampo present) — not a parallel `plazo` object
+phases:
+  explore: done # read docx, schema (TipoProceso/Proceso/casoRelacionado), esquema.ts, catalog.schemas.ts, seed-catalogo.ts, seed-tipos.json, legal-tramites change
+  propose: done
+  spec: done # proceso-vencimientos (new), tramite-catalog (modified), tramite-management (modified)
+  design: done # diasHabiles algorithm, conditional eval, plazo(extends plazoDias)/disponibleSi/accion rule shapes, seed content
+  tasks: done # backend-first, 5 phases + verify
+  validate: done # self-review: reconciled with real schema (plazoDias/resultado/ayuda already exist → extend, not parallel); confirmed NO constitutional tipo seeded yet (DdP/Tutela are first); área = constitucional; boolean conditions need String() coercion; crearDerivado idempotency is app-level (no DB unique)
+  apply: phase4-done # P1-3 motor. P4: seed DdP + Acción de Tutela en seed-tipos.json (jurisdicción CONSTITUCIONAL, área constitucional). Conflicto con trabajo paralelo del usuario (ya había sembrado 6 acciones constit. formato viejo): se eliminó el duplicado "Acción de tutela" minúscula y se FUSIONÓ su contenido de dominio en mi "Acción de Tutela" + motor nuevo. DdP escala→"Acción de Tutela". Branch feat/derecho-peticion. Falta Fase 5 (UX cliente) y 4.2 opcional (plantillas). NO se ejecutó el seed en BD aún (pnpm seed:catalogo) por el trabajo paralelo sin commitear
+  verify: phase4-green # pnpm test 334/334; pnpm build clean; seed-tipos valida 34 tipos vs Zod; plantillas-seed valida render. SEMBRADO EN BD: DdP+tutela live (seed:catalogo), DdP visible en Constitucional confirmado por usuario; 3 plantillas (DdP petición+reiteración, tutela demanda)
+  phase4_2_done: true # plantillas iniciales: PLANTILLAS_SEED (módulo datos) + siembra en seed-catalogo.ts; renders testeados sin BD
+  phase5: done # CLIENTE (lex-control-client, rama feat/roles-tramites, commit 2837a66): lib/procesos.ts espejo del motor condicional + fechaLimite; FormularioDinamico oculta campos/asterisco dinámico; expediente con celda Vencimiento+semáforo, stepper atenúa disponibleSi + maneja 422, botón Crear<tutela> (escalar idempotente + enlace), enlace caso base; VencimientosBanner en listado; procesos-api escalarProceso+getVencimientos. tsc --noEmit limpio + next build OK
+  gap_datos_resuelto: true # PATCH /procesos/:id acepta `datos` (validación tolerante exigirRequeridos=false; los requeridos se exigen al avanzar etapa); UI DatosProceso (vista+edición con FormularioDinamico) en el expediente. API commit 5d64553 (+3 tests, 337 total), client commit 0c7474d (tsc+build OK). La tutela derivada (datos:{}) y cualquier proceso ya se pueden completar/corregir.
+  archive: done # 2026-06-09; specs fusionadas a openspec/specs/ (proceso-vencimientos nueva; tramite-catalog/management con deltas aplicados). Fases 1-5 + gap datos + smoke e2e 12/12 verificados
+capabilities:
+  new:
+    - proceso-vencimientos
+  modified:
+    - tramite-catalog # conditional fields + plazoDesdeCampo/disponibleSi/accion rules + seeded DdP/Tutela
+    - tramite-management # conditional validation/gating + crearDerivado escalation
+resolved_decisions:
+  - festivos_source: algorithmic # CLOSED: algorithmic (Emiliani + Meeus Easter), unit-tested expected set 2024-2027
+  - deadline_override: allow-manual-edit # CLOSED: yes — fechaLimite is writable; stage-move recompute does not silently clobber a manual edit
+  - tutela_modeling: separate-tipo # CLOSED: separate global tipo "Acción de Tutela" + casoRelacionadoId (matches schema)
+notes: |
+  Driven by doc's/DERECHO DE PETICIÓN.docx (now openspec/roadmap-docs/). DdP is a constitutional right
+  (Ley 1755/2015). The doc's workflow: file petition -> entity answers within legal term -> if NO/PARCIAL
+  escalate to acción de tutela (own full lifecycle). Builds entirely on `legal-tramites` (catalog,
+  expediente, etapas engine, documentos/plantillas Fase 4). Only the three cross-cutting gaps
+  (business-day deadlines, conditional fields/rules, derive action) extend the engine; everything else
+  is seeded JSON. See [[tramites-legal-module-design]] and the legal-tramites change.
+next: Fases 1-5 + gap datos + LIVE SMOKE E2E (12/12) todos VERIFICADOS contra API:4000 + BD real (crear DdP → fechaLimite 2026-02-16 → respondida 422 por disponibleSi → escala_tutela → derivar tutela ligada 201 → idempotente 409 → completar datos tutela 200 → aparece en /vencimientos; datos de prueba limpiados). Único pendiente: ARCHIVAR el change (mover a changes/archive/, marcar specs canónicas). OJO: working tree con trabajo paralelo del usuario (contratos, documentos, auth/me, env) — NO commitear.

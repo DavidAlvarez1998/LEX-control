@@ -1,0 +1,21 @@
+change: client-portal
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  audience_field: optional on POST /auth/login; mismatch -> generic 401
+  data_access: scoped GET /mi-empresa (resolved by token sub, never a client id)
+  jwt_payload: unchanged ({ sub, rol }); extra lookup on portal read
+  facturacion: deferred to a later change
+phases:
+  explore: done (inline)
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: done # backend (audience + /mi-empresa) + client UI (login/cuenta/servicios)
+  verify: done # 51 tests passing; API + client tsc clean; live smoke OK
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Retroactively recorded — implementation landed during interactive work and was then
+  formalized into this change. facturacion page + USUARIO self-admin are explicitly out of scope.
+next: archive

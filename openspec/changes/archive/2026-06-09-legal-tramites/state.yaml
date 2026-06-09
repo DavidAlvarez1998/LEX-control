@@ -1,0 +1,55 @@
+change: legal-tramites
+artifact_store: openspec
+execution_mode: interactive
+delivery_strategy: ux-first # validate client flow with mock data before wiring backend
+decisions:
+  catalog_model: metadata-driven # esquemaFormulario + etapas as JSON; one generic renderer/engine
+  catalog_ownership: hybrid-nullable-empresaId # null = global (ADMIN), set = despacho-owned; visible = global OR own
+  litigante: entity # Litigante + ParteTramite(rol), not fields inside datos
+  billing: decoupled # trámites are core/free; Servicio/EmpresaServicio untouched
+  stage_rules: minimal # camposRequeridos + documentosRequeridos + plazoDias only
+  documents: templates # PlantillaDocumento, conditional/loop engine, editable draft (not final pleading)
+  # --- added after validation (v2) ---
+  auth_tenancy: resolve-from-sub # JWT is {sub,rol}; empresa resolved per-request from req.user.sub
+  empresa_admin: requireEmpresaAdmin-middleware # enforce esAdminEmpresa (stored but unused today)
+  global_unique: empresaKey-sentinel # NULL distinct in MySQL unique → empresaKey = empresaId ?? ""
+  folio: per-empresa-counter-in-tx # @@unique([empresaId,folio]); generated in create $transaction
+  schema_drift: version-pinning # tipoEsquemaVersion snapshot on Tramite; catalog edit bumps version
+  cascade: explicit-per-relation # Usuario→Tramite SetNull; ParteTramite→Litigante Restrict (errno150)
+  stage_graph: nonlinear-terminal # backward/sideways allowed; terminal stage closes; EstadoTramite lifecycle
+  litigation_fields: promoted-CO # codigoInterno, radicado(nullable 23-dig), cuantía(SMLMV), instancia, despachoJuzgado, casoRelacionadoId
+  party_roles_CO: demandante-demandado # DEMANDANTE|DEMANDADO|EJECUTANTE|EJECUTADO|ACCIONANTE|ACCIONADO|IMPUTADO|ACUSADO|VICTIMA|TERCERO|APODERADO|OTRO + esNuestroCliente
+  identifiers_CO: cc-ce-nit-ti-pasaporte # NO rfc/curp (Mexican); tipoPersona NATURAL|JURIDICA
+  area_vs_jurisdiccion: split # areaPractica (seeded table) tags vs jurisdiccion (drives stages)
+  constitucional: tutela-first-class # tutela/cumplimiento/popular/grupo as own Tramite + optional casoRelacionadoId
+  frontend_primitives: build-first # client ui.tsx has NO form inputs; build them before the renderer
+  area_taxonomy: RESOLVED-seed-all # ALL state-recognized areas in seeded AreaPractica table (tipo + jurisdiccion + activo); Ley 270/1996 + Acuerdo 201/1997; ~10 active, rest inactive
+  integraciones: cpnu+corteconst+rues-v1 # adapter interface api|scrape|aggregator; CPNU scrape (radicado→actuaciones), Corte Const. SODA api, RUES aggregator; defer SAMAI/SNR-VUR/DIAN/RUNT/Registraduria/Migracion/X-Road
+  integraciones_compliance: ley-1581-2012 # habeas data; lawful basis; respect portal ToS; encrypted per-despacho creds
+phases:
+  explore: done # conversational discovery + codebase read (schema, openspec convention)
+  propose: done
+  spec: done # tramite-catalog, tramite-management, litigantes
+  design: done
+  tasks: done # UX-first; primitives-first Phase 1
+  validate: done # 4 adversarial agents; 2 BLOCKERs + many MAJORs found and folded into v2 artifacts
+  apply: phase4-done # UX + backend + client + AI-seeded catalog + admin builder + DOCS (plantilla engine, generation, attach, draft edit, admin plantilla mgr, documentosRequeridos gate); Phase 5 (integraciones) pending
+  verify: phase4-tests-green # API tsc + both next builds clean; 260 tests pass (22 plantilla engine + 10 doc/plantilla/etapa + rest intact); db push OK
+  archive: done # 2026-06-09; specs promovidas a openspec/specs/ (tramite-catalog/management/litigantes/integraciones-estatales). FASE 5 (integraciones estatales) NO implementada — marcada en el propio change como 'separate later deliverable'; requiere infra (Redis+Playwright para CPNU scrape, llaves API de pago para RUES, portales en vivo); se retoma como CHANGE NUEVO dedicado
+capabilities:
+  new:
+    - tramite-catalog
+    - tramite-management
+    - litigantes
+    - integraciones-estatales
+  modified:
+    - authentication # additive: requireEmpresaAdmin middleware (enforces existing esAdminEmpresa)
+notes: |
+  Jurisdiction = COLOMBIA (corrected from Mexico; the Empresa.rfc field is misleading → NIT in CO).
+  Empresa = despacho de abogados; Usuario = abogados/staff. Colombian domain researched (CGP Ley
+  1564/2012, CPACA Ley 1437/2011, CPTSS, Ley 906/2004, tutela Dec. 2591/1991). No amparo (→ tutela);
+  identifiers CC/CE/NIT/TI/Pasaporte (no RFC/CURP); radicado = 23-digit court number (nullable);
+  cuantía mínima/menor/mayor in SMLMV; split areaPractica (seeded table) from jurisdiccion.
+  Delivery is UX-first: Phase 1 builds the client flow + <FormularioDinamico> against a mock TS
+  contract that becomes the API contract; Phase 2 implements it. See [[tramites-legal-module-design]].
+next: Phase 4 (document templates) or Phase 5 (state integrations); lawyer review of the AI-seeded catalog. See apply-progress.md.

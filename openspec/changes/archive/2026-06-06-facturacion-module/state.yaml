@@ -1,0 +1,28 @@
+change: facturacion-module
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  invoice_shape: line-items-plus-iva # items (descripcion/cantidad/valorUnitario) + subtotal/IVA/total; IVA % per invoice (default 19)
+  payment_model: reuse-ingreso # a payment is an Ingreso linked via new scalar Ingreso.facturaId; pagado/saldo/status derived
+  origin: contract-prefill-and-manual # create from a signed contract (prefill cuota) OR fully manual
+  numbering: consecutive-on-emit # FAC-YYYY-NNNN per empresa+year, assigned in a transaction on emit; draft has numero=null
+  overpayment: reject # a payment exceeding saldo is rejected (400) to keep pagado <= total
+  status_model: stored-lifecycle-plus-derived-payment # estado = BORRADOR/EMITIDA/ANULADA; PAGADA/PARCIAL/VENCIDA derived
+  surface: client-portal-only # despacho invoices its own clients; no admin (platform) UI
+  access: empresa-admin # requirePermiso facturacion.factura.ver/.gestionar; granted to RolEmpresa.ADMINISTRADOR
+phases:
+  explore: done (mapped client flow + contable/comercial schema)
+  propose: done
+  design: done
+  spec: done
+  tasks: done
+  apply: done # schema pushed; modules/facturacion mounted; permisos seeded (44); client /facturacion wired
+  verify: done # 20 new tests, suite 194 green; API+client tsc clean; client build OK. Live smoke PASSED (5.3)
+  archive: done # 2026-06-06: spec copied to openspec/specs/facturacion; folder moved to changes/archive/
+notes: |
+  Completes the despacho flow: Cliente -> Cotizacion -> Contrato -> ConfiguracionCobro -> *Factura* -> Ingreso(linked) -> Cartera.
+  Single money source: payments are Ingresos; facturaId is an extra link, Cartera math unchanged.
+  APPLIED: schema (facturas/factura_items/Ingreso.facturaId) pushed to MySQL "LEX"; module at /facturacion;
+  permisos facturacion.factura.ver/.gestionar under módulo "contable" (ADMINISTRADOR+CONTABLE); client page wired.
+  DEFERRED: "facturar desde contrato" prefill (4.4); PDF/print + "Descargar"; cuotas calendar; DIAN e-invoice.
+next: DEFERRED follow-ups (facturar-desde-contrato prefill, PDF/print, cuotas calendar, DIAN) as future changes

@@ -1,0 +1,29 @@
+change: theme-toggle
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  dark_mode_strategy: class-based # .dark on <html> + Tailwind v4 @custom-variant dark
+  control_placement: topbar # ThemeToggle button in each app's topbar
+  persistence: localStorage # key "lex-theme"; no server/DB persistence
+  initial_default: os-prefers-color-scheme # used only when no stored choice
+  no_fouc: inline-head-script # apply .dark before first paint; suppressHydrationWarning on <html>
+  dependency: none # local lib/theme.ts helper, no next-themes
+  styling_approach: dark-variants # add dark: companions to existing slate palette (no token layer)
+phases:
+  explore: done
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: done # infra (both apps) + dark: sweep across primitives/shell/pages
+  verify: build-clean # both frontends `next build` pass; manual visual verify pending
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Both frontends are structurally identical; theme infra (lib/theme.ts, ThemeToggle) is kept byte-
+  identical across the two apps. Palette is small and consistent (mostly slate-*, white, indigo),
+  so dark: variants are added rather than introducing semantic tokens. Tailwind v4 already present.
+  Sidebar intentionally stays dark in both modes (it was already bg-slate-900).
+  The dark: sweep was applied with openspec/changes/theme-toggle/apply-darkvars.py (idempotent
+  token mapping): 222 slate substitutions + 54 accent substitutions across both apps. Full-page
+  backgrounds (login/activar/dashboard shell) hand-set to dark:bg-slate-950.
+next: manual runtime verify (toggle, persistence, no-FOUC, OS default, legibility), then archive

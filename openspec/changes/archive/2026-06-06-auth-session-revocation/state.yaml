@@ -1,0 +1,26 @@
+change: auth-session-revocation
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  revocation_mechanism: per-user tokenVersion (Int) embedded as JWT `tv` claim
+  middleware: requireAuth now stateful — PK lookup + active/not-pending/tv checks
+  login_pending_gate: reject 401 when activationToken != null (old password dies on reset)
+  bump_points: reset-password, set-password (activation), deactivate (activo true->false)
+  password_scrub_on_reset: no (pending-gate + tokenVersion already cover it)
+  legacy_tokens: missing `tv` treated as 0 (existing rows backfilled to 0 → no forced re-login)
+phases:
+  explore: done (inline — verified login/middleware/reset in code)
+  propose: done
+  spec: done (delta in specs/authentication/spec.md)
+  design: done
+  tasks: done
+  apply: done # schema+push, auth.service, middleware, login gate, 3 tokenVersion bumps
+  verify: done # 67 tests passing (was 56); pnpm build clean
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Backend-only change in lex-control-api. DB column pushed to MySQL "LEX"
+  (prisma db push). Open follow-ups before archive: (5.3) confirm both
+  frontends turn an API 401 into a redirect to login; (5.4) manual live e2e
+  reset→revoke. Trade-off accepted: requireAuth now does one indexed PK lookup
+  per authenticated request (short-TTL cache noted as future work).
+next: manual e2e (5.4) + frontend 401-handling check (5.3), then archive

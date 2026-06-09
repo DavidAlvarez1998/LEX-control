@@ -1,0 +1,28 @@
+change: admin-comercial-agenda
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  entity_shape: single-activity # one SeguimientoProspecto models both logged timeline + scheduled agenda (fechaProgramada + completada)
+  tipo_enum: reuse-tipogestioncomercial # no new enum; reuse LLAMADA/WHATSAPP/REUNION/VIDEOLLAMADA/CORREO/OTRO
+  owner: scalar-comercialid-no-fk # comercialId plain column (like Prospecto); defaults from prospecto, else creator
+  scope: per-comercial-via-parent-prospecto # reuse cargarProspecto 404 scoping; agenda hard-scoped comercialId=self; ADMIN sees all
+  placement: ventas-module # routes in existing modules/ventas; /seguimientos + /agenda + nested /prospectos/:id/seguimientos
+  agenda_query: range-default-today-plus-vencidas # desde/hasta default today; overdue pending returned as vencidas[]
+  agenda_ui: month-calendar-grid # AgendaView = monthly calendar; click a day -> modal to add activity (prospecto+tipo+motivo+12h-time-AM/PM-toggle) + see/complete that day's items; WhatsApp wa.me link under selected prospecto; fetches month range (incluirCompletadas)
+  activity_states: completar-editar-cancelar-borrar # per-activity actions; completed+cancelled stay visible in gray (line-through), not deleted; cancelar requires motivo (new SeguimientoProspecto.canceladaEn + motivoCancelacion); agenda "pendiente"=completada:false AND canceladaEn:null
+  surface: admin-only # admin app only; pre-sale pipeline (no post-win Empresa activities)
+phases:
+  explore: done # mapped ventas module, Prospecto model, SeguimientoComercial pattern, scope helper
+  propose: done
+  design: done
+  spec: done
+  tasks: done
+  apply: done # schema (seguimientos_prospecto); ventas routes (/seguimientos,/agenda,nested,/equipo-comercial); admin UI (timeline, /agenda, /comercial tabbed shell = Prospectos+Equipo, prospectos comercial filter). Sidebar: single "Comercial" entry with 4 tabs (Prospectos, Equipo[admin], Agenda, Comisiones); COMERCIAL sees all but Equipo. /prospectos|/agenda|/comisiones redirect to /comercial(?tab=). Bodies extracted to components/{prospectos-list,equipo-comercial,agenda-view,comisiones-view}; shell reads ?tab= via useSearchParams (Suspense-wrapped).
+  verify: done # 17 agenda tests, suite 221 green; API+admin build clean; live smoke (agenda 14/14 + equipo/filter/agenda-by-comercial)
+  archive: done # 2026-06-06: specs merged to openspec/specs/; archived
+notes: |
+  Extends admin-comercial-ventas. Adds seguimiento timeline + per-comercial agenda for prospectos.
+  Reuses TipoGestionComercial enum and the cargarProspecto() scope helper. Additive leaf table.
+  APPLIED: model SeguimientoProspecto pushed to MySQL "LEX"; routes in modules/ventas; admin Agenda nav.
+  Lint: new pages share the codebase-wide "setState in effect" (cargar pattern) — build is the gate.
+next: live UI review by user, then archive (copy spec -> openspec/specs/admin-comercial-agenda)

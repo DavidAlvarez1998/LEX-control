@@ -1,0 +1,21 @@
+change: client-auth
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  session_strategy: jwt-absolute
+  session_ttl: 8h
+  expiry_enforcement: proactive-clientside-exp
+  role_separation: strict # client=CLIENTE only, admin=ADMIN only, via login audience
+  refresh_tokens: false # out of scope (future)
+phases:
+  explore: done (inline)
+  propose: done
+  spec: done # authentication (delta) + client-portal-auth (new) + session-expiry (new)
+  design: done
+  tasks: done
+  apply: done # backend (8h TTL + audience) + client login stack + admin proactive-expiry parity. .env.local blocked by perms (api.ts defaults to :4000).
+  verify: builds-pass # api/client/admin pnpm build OK; manual runtime checks (login flow, role reject, idle expiry) pending
+  archive: done # 2026-06-04. Merged: authentication (consolidated), client-portal-auth (new), session-expiry (new) → openspec/specs/
+depends_on:
+  - user-management # provides CLIENTE password via activation link
+next: none (archived). Follow-up: manual runtime verify; archive api-foundation to reconcile its authentication delta with the consolidated specs/authentication/spec.md.

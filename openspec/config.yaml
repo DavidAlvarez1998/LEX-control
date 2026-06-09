@@ -1,0 +1,34 @@
+schema: spec-driven
+
+context: |
+  Repo: lex-control — 3 projects, no workspace tooling, package manager pnpm.
+  - lex-control-api (@lex/db): Prisma 6.19 + MySQL data layer. TARGET: grow into a real Express HTTP API. TypeScript.
+  - lex-control-admin: Next.js 16 / React 19 / Tailwind v4 admin console (port 3000).
+  - lex-control-client: Next.js 16 tenant app (port 3001).
+  Domain: multi-tenant. Empresa groups Usuarios + EmpresaServicio; Usuario.rol = ADMIN (platform) | USUARIO (tenant).
+  DB already pushed (prisma db push, no migrations) to MySQL database "LEX".
+  Testing: none detected. Strict TDD disabled.
+  Artifact language: English. Conversation language: Spanish.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    - 'Forms: mark every required field label with a red asterisk (*) and validate on submit — if a required field is empty, block the API call and show which fields are missing (do not rely only on the backend 400)'
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: "pnpm --dir lex-control-api build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

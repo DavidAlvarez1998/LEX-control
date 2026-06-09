@@ -1,0 +1,35 @@
+change: integraciones-estatales
+artifact_store: openspec
+execution_mode: interactive
+delivery_strategy: phased-by-feasibility # ship Corte Constitucional (free API) first; defer scrape/aggregator
+decisions:
+  carved_from: legal-tramites-phase5 # era la "Phase 5" del change legal-tramites (ya archivado); spec canónica en openspec/specs/integraciones-estatales/
+  provider_order: corteconst-first # Corte Const. SODA (api, gratis) → CPNU (scrape, Redis+Playwright) → RUES (aggregator, llaves pago)
+  phase_a_stateless: true # consulta de jurisprudencia sin persistencia → sin cambio de schema
+  phase_b_blocked: parallel-schema # ActuacionJudicial/IntegrationSyncLog/ProviderConfig esperan a que el trabajo paralelo (contratos/documentos) en schema.prisma se commitee
+  cpnu_infra: redis+playwright # cola BullMQ + worker Playwright, rate-limit por host, circuit breaker; NUNCA inline
+  rues_creds: per-despacho-encrypted # ProviderConfig con llave API por despacho (Apitude/Verifik-class)
+  compliance: ley-1581-2012 # habeas data; borrar datos sincronizados al borrar proceso; UA identificable; DPA con agregadores
+phases:
+  explore: done # leído el spec canónico integraciones-estatales + tasks de la Phase 5 archivada
+  propose: done
+  spec: reuse-canonical # openspec/specs/integraciones-estatales/ (promovida al archivar legal-tramites)
+  design: done # interfaz ProviderAdapter + DTOs normalizados; adapter aislado estilo documentos.client
+  tasks: phased # A (foundation+CorteConst) HECHA / B (persistencia+sync) / C (CPNU scrape) / D (RUES) pendientes
+  validate: pending
+  apply: phaseA-done # rama feat/integraciones-estatales, commit ea8495a. src/modules/integraciones/ (types/client/router/schemas) + GET /integraciones/jurisprudencia + env.integraciones.corteConstitucional. Staging selectivo por hunks (env/app tenían trabajo paralelo del usuario). 5 tests; 342 total
+  verify: phaseA-green # pnpm build limpio; 342/342 tests; smoke en vivo auth→router→adapter→API OK (502 esperado: datasetId placeholder, configurar CORTE_CONST_DATASET para datos reales)
+  archive: pending # tras completar al menos B (persistencia) — o decisión del usuario
+capabilities:
+  modified:
+    - integraciones-estatales # implementa el spec ya canónico
+notes: |
+  Creado 2026-06-09 al archivar legal-tramites + derecho-peticion. NO se implementó código aún: la
+  Phase A (Corte Constitucional SODA) es factible (API REST gratuita), pero requiere decisión de
+  arranque del usuario; las Phases C/D están bloqueadas por infra (Redis/Playwright) y llaves de pago
+  que no existen en este entorno; la Phase B (persistencia) está bloqueada hasta que el trabajo
+  paralelo de contratos/documentos en schema.prisma se commitee (para no enredar commits).
+next: Phase A APLICADA+VERIFICADA. Para datos reales: configurar CORTE_CONST_DATASET con el dataset
+  real de la relatoría de la Corte Constitucional en datos.gov.co. Phase B (persistencia/sync) espera
+  a que el trabajo paralelo de contratos/documentos en schema.prisma se commitee; C/D esperan
+  infra (Redis/Playwright) y llaves de pago (RUES).
