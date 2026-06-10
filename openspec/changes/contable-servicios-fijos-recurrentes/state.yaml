@@ -1,0 +1,32 @@
+change: contable-servicios-fijos-recurrentes
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-reported # el usuario pidió que servicios fijos fijen día/mes según frecuencia
+  design: template-plus-generate # Opción B elegida: modelo plantilla ServicioFijoRecurrente → genera instancias ServicioFijo por periodo
+  permisos: reuse-serviciofijo # reusa contable.serviciofijo.ver/.crear/.editar → CONTABLE ya las tiene, cero re-seed
+  generation: explicit-button # POST /generar manual, no cron (coherente con el módulo sin jobs)
+  vencimiento: clamp-last-day-utc # día 31 en feb → 28/29; cálculo UTC
+  idempotent: skipDuplicates # respeta @@unique(empresaId, tipoServicio, proveedor, periodo)
+  related_fix: cuenta-saldo # mismo turno: saldoActual ahora resta ServicioFijo + Nomina PAGADO (detalle y listado)
+phases:
+  explore: done # análisis SDD de specs contable-serviciosfijos/cuentas + schema + router + front
+  propose: done
+  spec: delta # specs/contable-serviciosfijos/spec.md (ADDED: plantilla + generación)
+  design: done # plantilla → genera; reusa permisos; clamp vencimiento
+  tasks: done
+  apply: done # schema pushed; API + front + tests
+  verify: green # 351/351 tests; tsc API+cliente limpios; build cliente OK; SMOKE EN VIVO 10/10 (BD real, descuenta saldo, sin residuo)
+  archive: pending
+capabilities:
+  modified:
+    - contable-serviciosfijos # +plantilla recurrente +endpoint generar +VENCIDO derivado +soporteFacturaUrl en UI
+    - contable-cuentas # implementa el Restrict de borrado (DELETE 409→INACTIVA) que el spec ya exigía + saldo resta SF/nómina
+notes: |
+  Creado 2026-06-10. Implementado y verificado en el mismo turno. Sin re-seed (reusa permisos de
+  servicio fijo). Schema aplicado con `pnpm push` (la BD NO usa migrate). El fix del saldo de cuenta
+  (problema #2 del usuario) viaja junto pero ya estaba contemplado como opcional en el spec
+  contable-cuentas, así que no necesita delta de spec propio.
+next: Smoke en vivo (crear plantilla → generar periodo → marcar pagado → confirmar que el saldo de la
+  bolsa descuenta). Luego commit/rama y decidir merge. Gaps menores aún abiertos: VENCIDO derivado en
+  lectura, DELETE de cuentas, soporteFacturaUrl en UI.

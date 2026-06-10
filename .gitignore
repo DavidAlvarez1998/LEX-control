@@ -23,4 +23,4 @@ out/
 
 # tooling local del agente (no va al repo compartido)
 agents/
-
+#openspec/

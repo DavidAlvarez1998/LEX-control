@@ -1,0 +1,32 @@
+change: comercial-rol-portal
+artifact_store: openspec
+execution_mode: interactive
+delivery_strategy: phased # schema → seed/permisos → helper → endpoints → tests → frontend
+decisions:
+  comisiones: manual # el ADMINISTRADOR de la empresa las registra; el COMERCIAL solo ve las suyas. Sin disparador automático
+  cartera_visibilidad: ficha-cliente-lectura # resumen de cobro dentro de /clientes/[id], bajo módulo comercial (no exige contable)
+  agenda_modelo: reusa-seguimiento # SeguimientoComercial extendido (no un modelo nuevo); fechaProximaTarea = slot
+  procesos: api-asegurada # gating real con requirePermiso (proceso.ver/editar); COMERCIAL solo lectura + acotado a sus clientes
+  rbac_global: true # permiso→RolEmpresa global; sembrar habilita a usuarios existentes al instante
+  modulo_judicial_baseline: true # gatear procesos no bloquea a nadie en la puerta de módulo
+phases:
+  explore: done # mapa de comercial-funnel + agenda admin + comisiones + cartera + nav/guards
+  propose: done
+  design: done # plan aprobado (plan file tidy-marinating-music.md)
+  tasks: done
+  validate: done # pnpm build (api+client) + pnpm test 366/366
+  apply: done # schema+push+seed, cartera.service, endpoints comisiones/cartera/agenda, gating procesos, frontend
+  verify: green # api build limpio; 366 tests; client build con /agenda; smoke en vivo pendiente
+  archive: pending # promover spec a openspec/specs/ tras smoke manual por rol
+capabilities:
+  modified:
+    - comercial-funnel # comisiones, cartera-resumen, agenda sobre seguimientos
+  added:
+    - procesos-rbac # proceso.ver/proceso.editar + scoping COMERCIAL
+notes: |
+  Aplicado en las ramas de feature existentes (api: feat/proceso-cliente-abogado; client:
+  feat/proceso-cliente-abogado). DB ya en sync (pnpm push) + seed:foundations corrido (49 permisos,
+  backfill 1 seguimiento). NO mergeado a main. La spec canónica se promoverá a openspec/specs/ al
+  archivar, tras el smoke manual por rol (ADMINISTRADOR/COMERCIAL/JURIDICO/CONTABLE).
+next: Smoke manual en vivo por rol (agenda solo-suya del comercial, cartera lectura, comisiones
+  admin-gestiona/comercial-ve-suyas, /procesos solo-lectura + 403 en escritura por curl). Luego archivar.
