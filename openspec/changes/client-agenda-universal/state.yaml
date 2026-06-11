@@ -1,0 +1,32 @@
+change: client-agenda-universal
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "todos los usuarios de client tengan la posibilidad de crear y usar la agenda"
+  acceso: baseline-requireAuth # agenda deja de exigir módulo comercial + rol; requireAuth para cualquier usuario del despacho
+  cliente: opcional-sin-prelistar # Q del usuario: clienteId opcional + buscador solo-al-escribir (no pre-lista)
+  schema: clienteId-nullable # ya aplicado en working tree (BD nullable, SetNull); este change lo documenta
+  registradoPor: batch-resuelto # GET /agenda adjunta creador {nombre,roles,esAdminEmpresa} por item, scoped empresaId
+  filtro_admin: todos-los-miembros # selector pasa de COMERCIAL-only a cualquier miembro activo
+  bug_fix: empresaIdRequerido-no-es-middleware # getter usado como middleware colgaba requests (timeout); removido de la cadena
+phases:
+  explore: done # agenda-comercial-view + comercial.router + SeguimientoComercial + nav/guard + comercial-api
+  propose: done
+  spec: delta # specs/comercial-seguimiento/spec.md (MODIFIED clienteId opcional + ADDED baseline gating + registradoPor)
+  design: done
+  tasks: done
+  apply: done # API gating + assertCliente condicional + registradoPor + fix middleware; front nav/guard/form/admin-view/types
+  verify: green # tsc API + next build cliente limpios; 374/374 tests; SMOKE EN VIVO 3/3 (BD real, sin residuo)
+  archive: pending
+capabilities:
+  modified:
+    - comercial-seguimiento # clienteId opcional + agenda baseline (requireAuth) + registradoPor en /agenda
+notes: |
+  Creado 2026-06-11. APLICADO+VERIFICADO el mismo día (build + 374 tests + smoke en vivo 3/3). Parte del
+  schema (clienteId nullable) + apertura parcial del gating de /seguimientos ya venía en el working tree
+  (trabajo en progreso del usuario sobre feat/proceso-cliente-abogado); este change lo completó (4
+  endpoints faltantes + registradoPor + todo el frontend) y CORRIGIÓ un bug introducido: empresaIdRequerido
+  (getter) puesto como middleware colgaba las requests (timeouts). Cambios SIN commitear (conviven con
+  trabajo paralelo de procesos/catalog en el working tree).
+next: Commit selectivo en rama (comercial.router/schemas + agenda front + nav + page + comercial-api +
+  openspec) sin arrastrar el trabajo paralelo de procesos/catalog. Decidir merge.
