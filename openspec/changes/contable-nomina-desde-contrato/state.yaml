@@ -1,0 +1,40 @@
+change: contable-nomina-desde-contrato
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-reported # el usuario preguntó si Nómina puede traer datos de Contratos y pidió validarlo por SDD
+  scope: nomina-only # auditadas las 8 hojas de contable; la ÚNICA relación de campo real con Contrato HR es Nómina
+  schema: no-change # Nómina ya tiene empleadoId + todos los campos; Contrato ya existe
+  fuente_empleado: contratos-plus-nombre-libre # selector de contratos que prellena, pero "Empleado" sigue aceptando nombre libre (fallback marcado como excepción)
+  acceso_datos: endpoint-empleables-minimo # GET /contable/nominas/empleables gated por contable.nomina.crear; NO se concede contrato.ver a CONTABLE
+  recurrencia: out-of-scope # generación por periodo (diaPago/formaPago) se deja a Fase 2
+  prefill: parcial # solo 5 campos limpios + mapeo enum tipoContrato→TipoVinculacion; bonif/descuentos/cuenta NO (mismatch tipo/concepto)
+  snapshot: preserved # se copian valores; no modifica ningún requisito existente de contable-nomina
+  # refinamientos de la vida real (aplicados):
+  liquidacion: no-restringir-activos # incluye FINALIZADO/SUSPENDIDO (liquidación); UI muestra vigentes por defecto + check
+  nombre_libre: excepcion-marcada # "Otro sin contrato" con aviso ámbar; el contrato es la fuente de verdad
+  empleadoId_enforced: si # POST/PATCH /nominas valida empleadoId same-empresa (cierra requisito de spec antes sin implementar)
+phases:
+  explore: done # specs contable-nomina/serviciosfijos + schema Nomina/Contrato + nomina.tsx + contratos.router
+  propose: done
+  spec: delta # specs/contable-nomina/spec.md (ADDED: endpoint empleables + prefill desde contrato + empleadoId enforced)
+  design: done # endpoint mínimo + prefill parcial copy-values; sin schema; reusa permisos
+  tasks: done
+  apply: done # API empleables + assertEmpleado + lib Empleable + selector nomina.tsx
+  verify: green # 373/373 tests (3 nuevos); tsc API limpio; next build cliente limpio; SMOKE EN VIVO 4/4 (BD real, sin residuo)
+  archive: pending
+capabilities:
+  modified:
+    - contable-nomina # +GET /empleables (proyección mínima) +prefill copy-values desde Contrato HR +empleadoId enforced same-empresa (no modifica requisitos existentes)
+notes: |
+  Creado 2026-06-11. APLICADO + VERIFICADO (build) el mismo día; falta smoke en vivo. Validación SDD:
+  traer datos del contrato a la nómina realiza una relación ya anticipada por el diseño (la spec de
+  nómina dice que el "future HR módulo" — Contratos — es dueño del empleado; el schema de Contrato dice
+  "luego conecta con Contable"). Aditivo: sin schema, reusa permisos contable.nomina.*, cero re-seed.
+  Superficie RBAC mínima vía endpoint empleables (CONTABLE NO recibe contrato.ver). Prefill parcial
+  honesto: 5 campos + mapeo enum; bonif/descuentos/cuenta quedan manuales por incompatibilidad.
+  Snapshot intacto (copy-values). Refinamientos de vida real: no restringir a ACTIVO (liquidación de
+  finalizados), nombre libre = excepción marcada, empleadoId validado same-empresa. Caveat: Nomina es
+  registro de pagos, NO liquidador (sin seguridad social/parafiscales/prestaciones/PILA).
+next: Commit en rama (feat/nomina-desde-contrato api+cliente) y decidir merge. Fase 2 futura: generación
+  recurrente de nómina por periodo (diaPago/formaPago), donde realmente vive la nómina.
