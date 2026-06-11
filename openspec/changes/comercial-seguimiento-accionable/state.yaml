@@ -1,0 +1,33 @@
+change: comercial-seguimiento-accionable
+artifact_store: openspec
+execution_mode: interactive
+delivery_strategy: phased # schema → endpoints → frontend → tests
+decisions:
+  alcance: paquete-completo # cockpit "Para hoy" + lista enriquecida + cerrar ciclo + alertas accionables
+  disposicion: enum # DisposicionGestion en SeguimientoComercial (cambio de schema, db push)
+  derivacion: on-read # señales (diasSinGestion/proximaTarea/faseActual/diasEnFase) calculadas, NO almacenadas (igual que alertas)
+  cockpit_ruta: nueva # /seguimiento como vista diaria; /clientes sigue siendo el pipeline completo
+  perdido_atajo: reusa-fase # NO_VIABLE → POST /clientes/:id/fase PERDIDO
+  permisos: reusa # comercial.seguimiento.ver / comercial.alertas.ver; sin permisos nuevos
+phases:
+  explore: done # mapa comercial (modelo + router + UI + specs) vía 2 Explore agents
+  propose: done
+  design: done # plan aprobado (plan file en ~/.claude/plans)
+  tasks: pending
+  validate: pending
+  apply: pending
+  verify: pending
+  archive: pending # promover specs a openspec/specs/ tras smoke
+capabilities:
+  modified:
+    - comercial-seguimiento # campo disposicion + cerrar ciclo
+    - comercial-alertas # items accionables (nombre/telefono)
+    - clientes # señales derivadas en la lista
+  added:
+    - comercial-pipeline # /comercial/pipeline + /comercial/hoy (cockpit)
+notes: |
+  Evaluación: el seguimiento captura lo correcto pero no impulsa el día a día; la mejora es
+  exponer las señales y cerrar el ciclo del contacto, no agregar más data. Decisiones del usuario:
+  paquete completo + enum de disposicion.
+next: Aplicar schema (enum+columna, db push), endpoints pipeline/hoy/alertas, frontend (/seguimiento,
+  /clientes, registrar-gestion, Inicio), tests + smoke.
