@@ -1,0 +1,30 @@
+change: cliente-convert-ownership
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-report # "un usuario no deja pasar a cliente el prospecto de otro" → resultó ser RBAC, no pertenencia
+  diagnostico: no-era-pertenencia # no hay muro; responsableComercialId vacío al crear; el 403 era de rol (JURIDICO sin cliente.convertir)
+  convertir: juridico-incluido # Q1 usuario: cliente.convertir += JURIDICO (el abogado activa su propio intake)
+  pertenencia: sin-muro-aviso # Q2 usuario: estándar bufete (Clio) — sin bloqueo + "Responsable: Fulano" + confirm suave
+  responsable_default: creador # POST /clientes auto-asigna responsableComercialId = creador (antes quedaba null)
+  responsable_semantica: originador # "responsable" puede ser JURIDICO o COMERCIAL; se relaja la guía blanda "SHOULD COMERCIAL" (nunca enforced)
+phases:
+  explore: done # clientes.router/schemas + seed-foundations RBAC + clientes/page.tsx + spec clientes
+  propose: done
+  spec: delta # specs/clientes/spec.md (ADDED no-wall + auto-responsable + reads exponen responsable; MODIFIED convertir+JURIDICO, responsable=originador)
+  design: done
+  tasks: done
+  apply: done # API + RBAC re-seed + frontend
+  verify: green # tsc API + next build cliente limpios; 377/377 tests; re-seed OK; SMOKE EN VIVO 3/3 (BD real, sin residuo)
+  archive: pending
+capabilities:
+  modified:
+    - clientes # convertir+JURIDICO, auto-responsable=creador, reads exponen responsable, sin muro de pertenencia
+notes: |
+  Creado 2026-06-11. APLICADO+VERIFICADO el mismo día. El reporte ("no deja pasar a cliente el de otro")
+  NO era un muro de pertenencia (no existe): era RBAC — JURIDICO no tenía cliente.convertir → 403
+  genérico. Decisión vida-real (estándar bufete Clio): sin muro, convertir abierto a JURIDICO, responsable
+  auto-asignado + visible + confirm suave. Re-seed aditivo (rolEmpresaPermisos 100). Actualiza la nota
+  previa [[juridico-clientes-access]] que decía "convertir NO". SIN COMMIT (working tree con trabajo
+  paralelo de procesos/catalog + agenda + mi-empresa-servicios sin commitear; rama feat/agenda-universal).
+next: Commit selectivo (clientes.router + seed-foundations + clientes/page.tsx + openspec) y decidir merge.
