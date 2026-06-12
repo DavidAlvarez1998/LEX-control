@@ -99,3 +99,13 @@ When `responsableComercialId` is set, the referenced `Usuario` SHOULD hold `RolE
 - GIVEN a user holding `RolEmpresa.COMERCIAL` in the despacho
 - WHEN they are set as `responsableComercialId` of a `Cliente`
 - THEN the assignment is accepted
+
+### Requirement: The CRM list surfaces derived seguimiento signals
+> MODIFIED by change `comercial-seguimiento-accionable`.
+
+The clientes list MUST be readable as a pipeline at a glance: the derived seguimiento signals (`ultimaGestionEn`/`diasSinGestion`, `proximaTareaEn`/`tareaVencida`, `faseActual`/`diasEnFase`, `ultimaDisposicion`) are supplied by `GET /comercial/pipeline` (see capability `comercial-pipeline`) and consumed by the CRM list with quick filters (`?mios`, frío, vencidas, fase). These signals MUST remain computed on read and MUST NOT add stored columns to `Cliente`.
+
+#### Scenario: List shows signals without new stored fields
+- GIVEN the CRM list of a despacho
+- WHEN it renders a cliente row
+- THEN it shows the cliente's derived signals sourced from the pipeline endpoint AND no signal is persisted on the `Cliente` row

@@ -13,11 +13,12 @@ phases:
   explore: done # mapa comercial (modelo + router + UI + specs) vía 2 Explore agents
   propose: done
   design: done # plan aprobado (plan file en ~/.claude/plans)
-  tasks: pending
-  validate: pending
-  apply: pending
-  verify: pending
-  archive: pending # promover specs a openspec/specs/ tras smoke
+  spec: done # 1 added (comercial-pipeline) + 3 modified (comercial-seguimiento/alertas/clientes) → specs/ deltas
+  tasks: done # entregado por fases (schema → endpoints → frontend → tests)
+  validate: done
+  apply: done # api 89a0f91 (pipeline+hoy+disposicion) + client f6c1f99 (cockpit "Para hoy" + lista enriquecida + cerrar ciclo); db push aplicado (enum DisposicionGestion + columna disposicion)
+  verify: done # 380 tests verdes + client build verde (/seguimiento) + smoke EN VIVO scripts/smoke-seguimiento.ts (pipeline diasSinGestion/tareaVencida/diasEnFase, hoy buckets, disposicion persiste → ultimaDisposicion)
+  archive: done # 2026-06-12; specs promovidas a openspec/specs/ (comercial-pipeline added; comercial-seguimiento/alertas/clientes modified)
 capabilities:
   modified:
     - comercial-seguimiento # campo disposicion + cerrar ciclo
