@@ -17,8 +17,8 @@ phases:
   spec: delta # specs/proceso-vencimientos (list column + home card + ficha countdown) + specs/tramite-management (search/filter + caso marker + chain stage + derivar CTA + stepper legibility)
   design: done # presentation-only; reuse derived fechaLimite/semaforo; 2 read-only list params; no schema/RBAC
   tasks: done
-  apply: pending
-  verify: pending
+  apply: done # A (lista Vence+orden+inicio card+ficha countdown) + B (q/responsableId+UI) + C (caso marker+CasoChain etapaNombre) + D (CTA ya cubierto por reorden+copy) + E (plazo corto resaltado)
+  verify: build-green # tsc API limpio + next build cliente limpio; faltan tests del q/responsableId scoping + smoke en vivo
   archive: pending
 capabilities:
   modified:
@@ -41,5 +41,7 @@ notes: |
   navigation/reopen, layout reorder (etapas up), generar/descargar .doc, poder inheritance on
   reiteración, documentos requeridos disponibleSi. Those are the substrate; this change formalizes the
   remaining UX gaps.
-next: Review scope with the user, then apply by theme (A→E). Verify with API build + client build +
-  tests for the q/responsableId scoping + a live smoke on a DdP near its deadline.
+next: APPLIED A–E (build-green, sin commit final del SDD-state). Pendiente: tests del q/responsableId
+  scoping en lex-control-api + smoke en vivo (DdP cerca del vencimiento → home card + lista rojo/ámbar;
+  reiteración con marcador de caso; CasoChain con etapa por nodo). Commit en rama feat/cuenta-clientes
+  (api+client) ya hecho por temas; los SVG/favicon y ventas.* son trabajo paralelo del usuario (no tocar).
