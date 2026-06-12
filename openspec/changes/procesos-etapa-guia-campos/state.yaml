@@ -1,0 +1,32 @@
+change: procesos-etapa-guia-campos
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-requested # "al dar click en la etapa, en lugar de decir lo que falta, baja al formulario y marca cada campo a llenar"
+  layer: presentation-only # client-only; reuses 400 {faltantes,documentosFaltantes} + FormularioDinamico.errores + DatosProceso edit mode
+  schema: no-change
+  api: no-change # PATCH /procesos/:id/etapa already returns the faltantes; gate unchanged
+  fields_vs_docs: split-routing # campos → abrir+marcar el formulario; documentos → resaltar panel requeridos
+  self_clearing: si # el resaltado de un campo se limpia al llenarlo (filtra contra el borrador)
+  generic: si # mismo mecanismo para DdP/tutela/judicial (no código por tipo)
+phases:
+  explore: done # irAEtapa+bloqueo en procesos/[id]/page.tsx; DatosProceso edit; FormularioDinamico.errores; DocumentosRequeridos
+  propose: done
+  spec: delta # specs/tramite-management (ADDED: field-block opens+marks form; doc-block highlights requeridos panel)
+  design: done # client-only; resaltarCampos prop + scrollIntoView; split faltantes/documentosFaltantes
+  tasks: done
+  apply: done # DatosProceso resaltarCampos (abre edit + erroresVivos auto-clearing) + page.tsx split faltantes/docs + scroll a form/panel + mensaje pointer + DocumentosRequeridos resaltar (ring)
+  verify: build-green # next build cliente limpio; falta check manual en navegador (scroll + marcado de campos)
+  archive: pending
+capabilities:
+  modified:
+    - tramite-management # +blocked-stage UX: field-block scrolls to form, edit mode, marks each missing field (self-clearing); doc-block scrolls/highlights documentos-requeridos panel. Server gate UNCHANGED.
+notes: |
+  Created 2026-06-12. PROPOSED + SPEC. Client-only UX: a stage transition blocked by missing inputs
+  guides the lawyer to where they fill them instead of printing field keys under the stage. Reuses the
+  existing PATCH /etapa 400 {faltantes, documentosFaltantes}, FormularioDinamico.errores, and
+  DatosProceso edit mode. Builds on procesos-ux-ddp-tutela (same ficha) and the earlier retroceso/
+  reorder work. Out of scope: auto-save/auto-advance, changing stage requirements, per-document
+  highlight beyond the panel.
+next: Apply (datos-proceso.tsx resaltarCampos + page.tsx split/scroll + documentos-requeridos resaltar),
+  client build, manual check on a DdP radicada with empty fields.
