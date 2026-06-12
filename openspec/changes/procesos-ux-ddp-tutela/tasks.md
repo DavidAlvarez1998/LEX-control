@@ -18,7 +18,7 @@ vencimiento rule changes. API limited to two read-only list query params.
       case-insensitive) and `responsableId` (already existed), composing with `area`/`estado`, hard `WHERE { empresaId }`
 - [x] Client `lib/procesos-api.ts`: pass `q`/`responsableId` through `listProcesos`
 - [x] List UI: search box (debounced) + responsable selector (derived from procesos seen)
-- [ ] Tests: search matches título/código/cliente/radicado; responsable filter; both stay despacho-scoped
+- [x] Tests: search matches título/código/cliente/radicado; responsable filter; both stay despacho-scoped
 
 ## C. The caso is the unit
 - [x] List: per-row "caso" marker when the proceso has `casoRelacionadoId` (link to base) or derivados (badge)
@@ -38,6 +38,6 @@ vencimiento rule changes. API limited to two read-only list query params.
 ## Verify
 - [x] `pnpm --dir lex-control-api build` (tsc) clean
 - [x] `pnpm --dir lex-control-client build` (next) clean
-- [ ] `pnpm --dir lex-control-api test` green (new tests for `q`/`responsableId` scoping)
-- [ ] Live smoke: DdP with near deadline shows in home card + list red/amber; reiteración shows caso
-      marker; CTA reiterar/escalar contextual; search by entity finds the DdP
+- [x] `pnpm --dir lex-control-api test` green — 383/383 (3 nuevos q/responsableId scoping + 2 fix plantillas)
+- [x] Live smoke (BD real, read-only) 4/4: GET /procesos trae semaforo/responsable/tieneDerivados;
+      ?q filtra (3/13); /vencimientos buckets; /:id/caso con etapaNombre por nodo

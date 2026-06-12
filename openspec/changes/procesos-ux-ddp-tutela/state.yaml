@@ -18,7 +18,7 @@ phases:
   design: done # presentation-only; reuse derived fechaLimite/semaforo; 2 read-only list params; no schema/RBAC
   tasks: done
   apply: done # A (lista Vence+orden+inicio card+ficha countdown) + B (q/responsableId+UI) + C (caso marker+CasoChain etapaNombre) + D (CTA ya cubierto por reorden+copy) + E (plazo corto resaltado)
-  verify: build-green # tsc API limpio + next build cliente limpio; faltan tests del q/responsableId scoping + smoke en vivo
+  verify: green # tsc API + next build cliente limpios; 383/383 tests (3 nuevos q/responsableId + 2 fix plantillas); SMOKE EN VIVO 4/4 (BD real: lista con semaforo/responsable/tieneDerivados, q filtra 3/13, vencimientos buckets, caso con etapaNombre)
   archive: pending
 capabilities:
   modified:
