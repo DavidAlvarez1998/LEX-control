@@ -1,0 +1,45 @@
+change: procesos-ux-ddp-tutela
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-requested # "usa SDD para mejorar la UI/UX de procesos, específicamente DdP y tutela"
+  layer: presentation-only # no domain/stage/gate/vencimiento rule changes; client + 2 read-only list params
+  scope: generic-driven-by-ddp-tutela # operates on any TipoProceso; DdP/tutela drive the design, judicial benefits too
+  schema: no-change
+  rbac: no-change # reuses proceso.ver; no new permission
+  vencimiento_hoy: ui-derived # "vence hoy" = fechaLimite === today, derived in UI; API buckets unchanged
+  no_new_route: si # deadlines surfaced in place (list column + home card + ficha), not a /vencimientos page
+  caso_marker_not_regroup: si # list stays flat/sortable; caso indicated per row, full chain in ficha
+  api_additions: q-and-responsableId-readonly # GET /procesos optional filters, despacho-scoped, compose with area/estado
+phases:
+  explore: done # specs tramite-management + proceso-vencimientos; list/ficha/CasoChain/vencimientos-banner/home; DdP & tutela seeds
+  propose: done
+  spec: delta # specs/proceso-vencimientos (list column + home card + ficha countdown) + specs/tramite-management (search/filter + caso marker + chain stage + derivar CTA + stepper legibility)
+  design: done # presentation-only; reuse derived fechaLimite/semaforo; 2 read-only list params; no schema/RBAC
+  tasks: done
+  apply: pending
+  verify: pending
+  archive: pending
+capabilities:
+  modified:
+    - proceso-vencimientos # +list Vence column w/ semáforo & urgency sort +home vencimientos card +ficha active-stage countdown (all consume existing derivation; "vence hoy" UI-derived)
+    - tramite-management # +list q/responsableId filters +per-row caso marker +CasoChain shows current stage +promoted reiterar/escalar CTA +stepper plazo emphasis & branch legibility (state machine/gates/derivation UNCHANGED)
+notes: |
+  Created 2026-06-12. PROPOSED + SPEC only (not applied). UX-focused change for the proceso module with
+  Derecho de Petición & Tutela as the driving cases, but generic across all TipoProceso. Theme: make the
+  module deadline-first and the DdP/tutela flow legible. Five themes: (A) surface vencimientos in the
+  list column, the home card and the ficha countdown — reusing the already-derived fechaLimite/semáforo,
+  with a UI-only "vence hoy"; (B) list text search (código/título/cliente/radicado) + responsable filter
+  via two read-only params on GET /procesos; (C) the caso as a unit — per-row caso marker + CasoChain
+  showing each node's current stage; (D) promote the reiterar/escalar (crearDerivado) decision to a
+  contextual CTA; (E) stepper legibility — show plazo per stage, emphasize tutela's 3-day impugnación,
+  present DdP branches as response-driven alternatives. Strictly presentation: no schema, no RBAC, no
+  changes to the stage state machine, gates, branch semantics, derivation idempotency, or vencimiento
+  math. Out of scope: standalone /vencimientos route, list tree-collapse by caso, tutela-specific new
+  fields/stages (medida provisional / cumplimiento-desacato → separate domain proposal), admin portal.
+  Context: builds on this session's already-applied (uncommitted) fixes to the ficha — back-stage
+  navigation/reopen, layout reorder (etapas up), generar/descargar .doc, poder inheritance on
+  reiteración, documentos requeridos disponibleSi. Those are the substrate; this change formalizes the
+  remaining UX gaps.
+next: Review scope with the user, then apply by theme (A→E). Verify with API build + client build +
+  tests for the q/responsableId scoping + a live smoke on a DdP near its deadline.
