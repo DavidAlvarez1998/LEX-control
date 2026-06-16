@@ -22,7 +22,7 @@ phases:
   tasks: done
   apply: done # API empleables + assertEmpleado + lib Empleable + selector nomina.tsx
   verify: green # 373/373 tests (3 nuevos); tsc API limpio; next build cliente limpio; SMOKE EN VIVO 4/4 (BD real, sin residuo)
-  archive: pending
+  archive: done # archivado 2026-06-16
 capabilities:
   modified:
     - contable-nomina # +GET /empleables (proyección mínima) +prefill copy-values desde Contrato HR +empleadoId enforced same-empresa (no modifica requisitos existentes)

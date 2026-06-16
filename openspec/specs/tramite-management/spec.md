@@ -182,3 +182,118 @@ another despacho MUST be rejected with 400.
 - GIVEN a lawyer of the same despacho
 - WHEN set as `responsable`
 - THEN the assignment succeeds
+
+### Requirement: Procesos list supports text search and responsable filter
+> ADDED by change `procesos-ux-ddp-tutela`.
+
+`GET /procesos` MUST accept two optional read-only query params: `q` (free text matched case-insensitively against `codigoInterno`, `titulo`, the linked cliente `nombre`, and `radicado`) and `responsableId` (the abogado). Both MUST compose with the existing `area`/`estado` filters and remain hard-scoped to the token despacho (`WHERE { empresaId }`). The list UI MUST expose a search box and a responsable selector. No new permission is introduced (the existing `proceso.ver` gate applies).
+
+#### Scenario: Find a DdP by its entity or title
+- GIVEN procesos titled "DdP — EPS Salud Total" and "Tutela — Colpensiones"
+- WHEN the user types "salud" in the search box
+- THEN only the matching proceso(s) are listed, scoped to their despacho
+
+#### Scenario: Filter by responsible lawyer
+- GIVEN procesos assigned to abogados A and B
+- WHEN the user selects abogado A in the responsable filter
+- THEN only A's procesos show, and the filter composes with área/estado
+
+#### Scenario: Search stays despacho-scoped
+- GIVEN despacho X and despacho Y each have a proceso whose título contains "tutela"
+- WHEN a user of despacho X searches "tutela"
+- THEN only despacho X's proceso is returned
+
+### Requirement: The list indicates a proceso belongs to a multi-node caso
+> ADDED by change `procesos-ux-ddp-tutela`.
+
+Each list row that is part of a caso with more than one node (i.e. it has a `casoRelacionadoId` or has derivados) MUST show a small "caso" indicator linking to the base proceso, so a reiteración or an escalated tutela is never read as an unrelated matter. The list stays flat and sortable (no tree collapse); the full chain is shown in the ficha.
+
+#### Scenario: A reiteración is marked as part of its caso
+- GIVEN a DdP and its reiteración (linked by `casoRelacionadoId`)
+- WHEN the list renders the reiteración row
+- THEN it shows a "caso" marker linking to the base DdP
+
+#### Scenario: A standalone proceso shows no caso marker
+- GIVEN a DdP with no base and no derivados
+- WHEN the list renders its row
+- THEN no caso marker is shown
+
+### Requirement: Caso chain shows each node's current stage
+> ADDED by change `procesos-ux-ddp-tutela`.
+
+The `CasoChain` (rendered when the caso has more than one node) MUST show, for each node, its current stage name in addition to its estado and `fechaLimite`, and MUST remain legible on narrow viewports (horizontal scroll without clipping). The active node stays visually highlighted.
+
+#### Scenario: Chain reads DdP → reiteración → tutela with stages
+- GIVEN a caso DdP(terminada) → reiteración(radicada) → tutela(admisión)
+- WHEN the ficha of any node renders the chain
+- THEN each node shows its tipo, código, current stage, estado, and `fechaLimite`, with the open node highlighted
+
+### Requirement: The continuity decision (reiterar / escalar) is a contextual CTA
+> ADDED by change `procesos-ux-ddp-tutela`.
+
+When the active stage defines a `crearDerivado` action, the ficha MUST present it as a prominent, clearly-labeled call-to-action (not a footnote of the stage list), with copy that distinguishes a **continuation of the same type** (DdP → reiteración: "Crear la reiteración") from an **escalation to another type** (DdP → tutela: "Crear {tipo}"), and that states the base proceso becomes the caso base. The CTA MUST respect the existing idempotency: once a derivado of that type exists, it links to it instead of creating a duplicate.
+
+#### Scenario: Partial answer offers reiterar as a CTA
+- GIVEN a DdP in the `reiteracion` stage (contestaron = PARCIAL)
+- WHEN the ficha renders
+- THEN a clear CTA offers "Crear la reiteración" describing it as a continuation linked as the same caso
+
+#### Scenario: Silence offers escalar a tutela
+- GIVEN a DdP in the `escala_tutela` stage (contestaron = NO)
+- WHEN the ficha renders
+- THEN a clear CTA offers "Crear Acción de tutela" described as an escalation of the same caso
+
+#### Scenario: Existing derivado is linked, not duplicated
+- GIVEN the reiteración already exists for a DdP
+- WHEN the lawyer returns to the base DdP
+- THEN the CTA shows "abrir expediente →" to the existing reiteración and does not offer to create another
+
+### Requirement: Stage flow is legible for long and branched paths
+> ADDED by change `procesos-ux-ddp-tutela`.
+
+The stage stepper MUST show each stage's plazo when defined (`reglas.plazoDias` + `plazoTipoDias`), and MUST visually emphasize very short terms (e.g. the tutela impugnación = 3 días) so they are not missed. For branch stages that share an order and are mutually exclusive by `disponibleSi` (DdP respondida / reiteración / escala_tutela, keyed on `contestaron`), the UI MUST present only the applicable branch(es) as takeable and MUST make clear that they are alternatives driven by the response outcome — unavailable branches stay visible but dimmed/non-clickable (already the behavior), with one line of guidance.
+
+#### Scenario: Tutela's 3-day impugnación term is emphasized
+- GIVEN a tutela in `falloPrimeraInstancia` with the next stage `impugnacion` (3 días)
+- WHEN the stepper renders
+- THEN the impugnación term is shown and visually emphasized as a tight deadline
+
+#### Scenario: DdP branches reflect the response
+- GIVEN a DdP where `contestaron = PARCIAL`
+- WHEN the stepper renders the order-2 branches
+- THEN `reiteración` is takeable while `respondida` and `escala_tutela` are dimmed/non-clickable, with guidance that the path follows the response outcome
+
+### Requirement: A field-blocked stage transition opens and marks the form
+> ADDED by change `procesos-etapa-guia-campos`.
+
+When the user clicks a stage and the move is rejected because required FIELDS are missing (the `400` `faltantes`), the ficha MUST scroll to the proceso form, put it in edit mode, and visually mark each missing field (required-asterisk + per-field error state) by passing the missing field keys to the form. The marks MUST clear per-field as each one receives a value (the highlight is filtered against the current draft). A short pointer message MUST replace the raw key list. This applies to any `TipoProceso` (DdP, tutela, judicial).
+
+#### Scenario: DdP radicación block opens the form with both fields marked
+- GIVEN a DdP whose `radicada` stage requires `fechaRadicacion` and `nroRadicado`, both empty
+- WHEN the lawyer clicks the `radicada` stage
+- THEN the view scrolls to the form, the form is in edit mode, and `fechaRadicacion` and `nroRadicado` are marked as required/missing
+
+#### Scenario: A marked field clears as it is filled
+- GIVEN the form is showing `nroRadicado` marked as missing
+- WHEN the lawyer types a value into `nroRadicado`
+- THEN that field's missing mark clears while still-empty required fields stay marked
+
+#### Scenario: Tutela behaves the same
+- GIVEN a tutela stage requiring fields that are empty
+- WHEN the lawyer clicks that stage
+- THEN the form opens and each missing field is marked (same mechanism, no type-specific code)
+
+### Requirement: A document-blocked stage transition routes to the form (inline documents)
+> ADDED by change `procesos-etapa-guia-campos`.
+
+When the move is rejected because required DOCUMENTS are missing (the `400` `documentosFaltantes`), the ficha MUST scroll to the proceso form (in edit mode) — where each required document is an inline field of type archivo under its key — and show a short message naming the missing documents, rather than printing the raw list under the stage only. Because the documents are inline form fields, opening + scrolling to the form is sufficient (no separate documentos panel to highlight).
+
+#### Scenario: Missing poder.pdf routes to the form
+- GIVEN a DdP whose next stage requires `poder.pdf` and it is not attached
+- WHEN the lawyer clicks that stage
+- THEN the view scrolls to the form in edit mode with the message "Faltan documentos: poder.pdf — súbelos en el formulario"
+
+#### Scenario: Mixed field+document block guides to the form for both
+- GIVEN a stage that requires both a missing field and a missing document
+- WHEN the lawyer clicks it
+- THEN the form opens in edit mode, missing fields are marked, and the missing documents are named in the pointer message

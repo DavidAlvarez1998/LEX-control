@@ -16,13 +16,16 @@ phases:
   tasks: done
   validate: done # pnpm build (api+client) + pnpm test 366/366
   apply: done # schema+push+seed, cartera.service, endpoints comisiones/cartera/agenda, gating procesos, frontend
-  verify: green # api build limpio; 366 tests; client build con /agenda; smoke en vivo pendiente
-  archive: pending # promover spec a openspec/specs/ tras smoke manual por rol
+  spec: delta # 4 deltas escritos a posteriori (2026-06-16) y promovidos a openspec/specs/: comercial-comisiones (nuevo), procesos-rbac (nuevo), comercial-seguimiento (agenda-lifecycle), comercial-contrato-cobro (cartera-resumen)
+  verify: green # api build limpio; 366 tests; client build con /agenda; SMOKE POR ROL 25/25 (scripts/smoke-roles.ts vs BD real, 4 capacidades × admin/comercial/juridico/multi). Fix: expectativa agenda juridico 403→200 (client-agenda-universal la volvió baseline)
+  archive: done # archivado 2026-06-16 (specs promovidas a openspec/specs/)
 capabilities:
   modified:
-    - comercial-funnel # comisiones, cartera-resumen, agenda sobre seguimientos
+    - comercial-seguimiento # agenda-lifecycle: columnas comercialId/titulo/completada/... + GET /agenda + completar/cancelar/reabrir
+    - comercial-contrato-cobro # cartera-resumen: GET /comercial/clientes/:id/cartera (comercial.cobro.ver, sin exigir contable)
   added:
-    - procesos-rbac # proceso.ver/proceso.editar + scoping COMERCIAL
+    - comercial-comisiones # ComisionDespacho manual: admin registra/edita, comercial ve las suyas
+    - procesos-rbac # proceso.ver/proceso.editar + scoping COMERCIAL a sus clientes
 notes: |
   Aplicado en las ramas de feature existentes (api: feat/proceso-cliente-abogado; client:
   feat/proceso-cliente-abogado). DB ya en sync (pnpm push) + seed:foundations corrido (49 permisos,

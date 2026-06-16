@@ -6,7 +6,7 @@ decisions:
   carved_from: legal-tramites-phase5 # era la "Phase 5" del change legal-tramites (ya archivado); spec canónica en openspec/specs/integraciones-estatales/
   provider_order: corteconst-first # Corte Const. SODA (api, gratis) → CPNU (scrape, Redis+Playwright) → RUES (aggregator, llaves pago)
   phase_a_stateless: true # consulta de jurisprudencia sin persistencia → sin cambio de schema
-  phase_b_blocked: parallel-schema # ActuacionJudicial/IntegrationSyncLog/ProviderConfig esperan a que el trabajo paralelo (contratos/documentos) en schema.prisma se commitee
+  phase_b_done: 2026-06-16 # DESBLOQUEADA: la ventana de schema se abrió (contratos/documentos ya commiteado). Modelos ActuacionJudicial/IntegrationSyncLog/ProviderConfig + motor de sync idempotente IMPLEMENTADOS con proveedor MOCK (CPNU/RUES reales siguen en C/D)
   cpnu_infra: redis+playwright # cola BullMQ + worker Playwright, rate-limit por host, circuit breaker; NUNCA inline
   rues_creds: per-despacho-encrypted # ProviderConfig con llave API por despacho (Apitude/Verifik-class)
   compliance: ley-1581-2012 # habeas data; borrar datos sincronizados al borrar proceso; UA identificable; DPA con agregadores
@@ -15,11 +15,11 @@ phases:
   propose: done
   spec: reuse-canonical # openspec/specs/integraciones-estatales/ (promovida al archivar legal-tramites)
   design: done # interfaz ProviderAdapter + DTOs normalizados; adapter aislado estilo documentos.client
-  tasks: phased # A (foundation+CorteConst) HECHA / B (persistencia+sync) / C (CPNU scrape) / D (RUES) pendientes
-  validate: pending
-  apply: phaseA-done # rama feat/integraciones-estatales, commit ea8495a. src/modules/integraciones/ (types/client/router/schemas) + GET /integraciones/jurisprudencia + env.integraciones.corteConstitucional. Staging selectivo por hunks (env/app tenían trabajo paralelo del usuario). 5 tests; 342 total
-  verify: phaseA-green # pnpm build limpio; 342/342 tests; smoke en vivo auth→router→adapter→API OK (502 esperado: datasetId placeholder, configurar CORTE_CONST_DATASET para datos reales)
-  archive: pending # tras completar al menos B (persistencia) — o decisión del usuario
+  tasks: phased # A (foundation+CorteConst) HECHA / B (persistencia+sync) HECHA (2026-06-16, mock) / C (CPNU scrape) / D (RUES) bloqueadas por infra+llaves ausentes en este entorno
+  validate: green # pnpm build limpio; 399/399 tests (+7 unit crypto/mock); smoke e2e BD real 20/20 (scripts/smoke-integraciones-sync.ts)
+  apply: phaseB-done # Phase A (commit ea8495a) + Phase B (2026-06-16): schema 3 modelos+enum (db push) + crypto.ts (AES-256-GCM creds) + mockActuaciones.client.ts + actuacionesSync.service.ts (idempotente hash+timeline+log+caché TTL) + proveedores.ts (registry/ProviderConfig) + router (sincronizar/actuaciones/sync-logs/config) reusa proceso.ver/editar
+  verify: phaseB-green # build + 399 tests + e2e 20/20: idempotencia, no-op sin radicado, proyección timeline, caché TTL, proveedor deshabilitado, cross-tenant 404, cifrado credenciales, cascade habeas-data
+  archive: done # archivado 2026-06-16 (v1 A+B; C/D = carve-out futuro, bloqueadas por infra/llaves ausentes)
 capabilities:
   modified:
     - integraciones-estatales # implementa el spec ya canónico
@@ -29,7 +29,9 @@ notes: |
   arranque del usuario; las Phases C/D están bloqueadas por infra (Redis/Playwright) y llaves de pago
   que no existen en este entorno; la Phase B (persistencia) está bloqueada hasta que el trabajo
   paralelo de contratos/documentos en schema.prisma se commitee (para no enredar commits).
-next: Phase A APLICADA+VERIFICADA. Para datos reales: configurar CORTE_CONST_DATASET con el dataset
-  real de la relatoría de la Corte Constitucional en datos.gov.co. Phase B (persistencia/sync) espera
-  a que el trabajo paralelo de contratos/documentos en schema.prisma se commitee; C/D esperan
-  infra (Redis/Playwright) y llaves de pago (RUES).
+next: Phases A+B APLICADAS+VERIFICADAS (v1). El motor de sync corre contra un proveedor MOCK
+  determinista (env.integraciones.mockActuaciones, ON en dev/test, OFF en prod). Para enchufar un
+  proveedor REAL de actuaciones: implementar Phase C (CPNU scrape, requiere Redis+Playwright) o D
+  (RUES, requiere llave de pago por despacho en ProviderConfig) — ambos bloqueados en este entorno.
+  Para jurisprudencia real (Phase A): configurar CORTE_CONST_DATASET con el dataset de la relatoría.
+  Decisión pendiente: archivar v1 (A+B) o dejar el change abierto esperando C/D.

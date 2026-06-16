@@ -16,7 +16,7 @@ phases:
   tasks: done
   apply: done # API + RBAC re-seed + frontend
   verify: green # tsc API + next build cliente limpios; 377/377 tests; re-seed OK; SMOKE EN VIVO 3/3 (BD real, sin residuo)
-  archive: pending
+  archive: done # archivado 2026-06-16
 capabilities:
   modified:
     - clientes # convertir+JURIDICO, auto-responsable=creador, reads exponen responsable, sin muro de pertenencia

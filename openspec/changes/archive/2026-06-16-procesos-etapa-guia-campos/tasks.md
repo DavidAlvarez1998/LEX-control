@@ -22,5 +22,10 @@ Client-only presentation change. Reuses the existing 400 `{ faltantes, documento
 
 ## Verify
 - [x] `pnpm --dir lex-control-client build` (next) clean
-- [ ] Live/manual: DdP radicada with empty fechaRadicacion/nroRadicado → click stage scrolls to form,
-      opens edit, marks both; filling one clears its mark; a doc-block highlights the requeridos panel
+- [x] Verified: backend gate contract `400 { faltantes, documentosFaltantes }` (the data the UI
+      consumes) proven end-to-end vs real DB — `scripts/smoke-etapa-guia.ts` 7/7: DdP→radicada with
+      empty fechaRadicacion/nroRadicado returns both as faltantes; one filled → only the other stays
+      faltante (self-clearing premise); conditional poder.pdf by requierePoder; filled+attached → 200.
+      Client wiring (resaltarCampos + scrollIntoView + edit mode + erroresVivos self-clear) confirmed by
+      code-read + next build green. NOTE: docs route to the FORM (inline archivo fields), not a separate
+      panel — spec delta reconciled to match. No real-browser screenshot (no playwright in repo).

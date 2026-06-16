@@ -17,7 +17,7 @@ phases:
   tasks: done
   apply: done # API gating + assertCliente condicional + registradoPor + fix middleware; front nav/guard/form/admin-view/types
   verify: green # tsc API + next build cliente limpios; 374/374 tests; SMOKE EN VIVO 3/3 (BD real, sin residuo)
-  archive: pending
+  archive: done # archivado 2026-06-16
 capabilities:
   modified:
     - comercial-seguimiento # clienteId opcional + agenda baseline (requireAuth) + registradoPor en /agenda

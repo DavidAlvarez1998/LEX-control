@@ -16,8 +16,8 @@ phases:
   design: done # client-only; resaltarCampos prop + scrollIntoView; split faltantes/documentosFaltantes
   tasks: done
   apply: done # DatosProceso resaltarCampos (abre edit + erroresVivos auto-clearing) + page.tsx split faltantes/docs + scroll a form/panel + mensaje pointer + DocumentosRequeridos resaltar (ring)
-  verify: build-green # next build cliente limpio; falta check manual en navegador (scroll + marcado de campos)
-  archive: pending
+  verify: green # next build cliente + smoke-etapa-guia.ts 7/7 (gate radicada: faltantes/documentosFaltantes contract vs real DB); wiring por code-read. Spec delta reconciliado: docs inline en form (no panel aparte)
+  archive: done # archivado 2026-06-16
 capabilities:
   modified:
     - tramite-management # +blocked-stage UX: field-block scrolls to form, edit mode, marks each missing field (self-clearing); doc-block scrolls/highlights documentos-requeridos panel. Server gate UNCHANGED.

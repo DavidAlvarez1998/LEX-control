@@ -17,7 +17,7 @@ phases:
   tasks: done
   apply: done # schema pushed; API + front + tests
   verify: green # 351/351 tests; tsc API+cliente limpios; build cliente OK; SMOKE EN VIVO 10/10 (BD real, descuenta saldo, sin residuo)
-  archive: pending
+  archive: done # archivado 2026-06-16
 capabilities:
   modified:
     - contable-serviciosfijos # +plantilla recurrente +endpoint generar +VENCIDO derivado +soporteFacturaUrl en UI

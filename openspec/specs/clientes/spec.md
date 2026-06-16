@@ -92,13 +92,20 @@ The system MUST define the marketing-facing enums: `CanalIngreso { REFERIDO, INS
 - WHEN that `Litigante` is deleted
 - THEN the `Cliente` survives with `litiganteId = null`
 
-### Requirement: Responsable comercial should hold COMERCIAL
-When `responsableComercialId` is set, the referenced `Usuario` SHOULD hold `RolEmpresa.COMERCIAL` (app-enforced, not a DB constraint). The field MUST remain nullable and `SetNull`.
+### Requirement: Responsable comercial is the originator (relaxed role guidance)
+> MODIFIED by change `cliente-convert-ownership`.
+
+The previous guidance that `responsableComercialId` SHOULD hold `RolEmpresa.COMERCIAL` is RELAXED: the responsable is the **originator** and MAY hold `COMERCIAL` or `JURIDICO` (the abogado who brought the client). This was never enforced in code; the field MUST remain a nullable `SetNull` FK validated same-empresa.
 
 #### Scenario: Assigning a comercial responsable
 - GIVEN a user holding `RolEmpresa.COMERCIAL` in the despacho
 - WHEN they are set as `responsableComercialId` of a `Cliente`
 - THEN the assignment is accepted
+
+#### Scenario: A JURIDICO is a valid responsable
+- GIVEN a prospecto created by a user holding only JURIDICO
+- WHEN it is stored
+- THEN `responsableComercialId` = that abogado is valid (no role rejection)
 
 ### Requirement: The CRM list surfaces derived seguimiento signals
 > MODIFIED by change `comercial-seguimiento-accionable`.
@@ -109,3 +116,42 @@ The clientes list MUST be readable as a pipeline at a glance: the derived seguim
 - GIVEN the CRM list of a despacho
 - WHEN it renders a cliente row
 - THEN it shows the cliente's derived signals sourced from the pipeline endpoint AND no signal is persisted on the `Cliente` row
+
+### Requirement: No ownership wall on cliente edit/convert
+> ADDED by change `cliente-convert-ownership`.
+
+The system MUST NOT block editing or converting a `Cliente` based on who its `responsableComercialId` is. Any user of the despacho holding the relevant permiso (`cliente.editar` / `cliente.convertir`) MAY act on ANY `Cliente` of the same `empresa`. Ownership is informational (attribution + the "Míos" filter), NOT an authorization gate. The UI SHOULD surface the responsable (e.g. "Responsable: X") and MAY warn when acting on another user's cliente, but MUST NOT prevent the action.
+
+#### Scenario: A user converts another user's prospecto
+- GIVEN a PROSPECTO whose `responsableComercialId` is user A, and user B holds `cliente.convertir`
+- WHEN user B converts it
+- THEN it succeeds (no ownership block); the UI had shown a soft notice that it belongs to A
+
+### Requirement: Responsable comercial defaults to the creator on create
+> ADDED by change `cliente-convert-ownership`.
+
+On `POST /clientes`, when the body does not set `responsableComercialId`, the system MUST set it to the authenticated creator (`req.user.sub`). When the body sets it, that value is used (and still validated same-empresa). This makes every prospecto have an owner for attribution and the "Míos" filter.
+
+#### Scenario: Auto-assign creator
+- GIVEN a user creates a prospecto without `responsableComercialId`
+- THEN the created `Cliente` has `responsableComercialId = ` the creator's id
+
+### Requirement: Reads expose the responsable identity
+> ADDED by change `cliente-convert-ownership`.
+
+`GET /clientes` and `GET /clientes/:id` MUST include `responsableComercial { id, nombre }` (nullable) so the UI can show who owns each cliente.
+
+#### Scenario: List carries the responsable name
+- GIVEN a cliente with a responsable
+- WHEN the list is fetched
+- THEN each row carries `responsableComercial: { id, nombre }`
+
+### Requirement: RBAC — cliente.convertir includes JURIDICO
+> ADDED by change `cliente-convert-ownership`.
+
+`cliente.convertir` MUST be granted to `ADMINISTRADOR`, `COMERCIAL` AND `JURIDICO` (was ADMINISTRADOR + COMERCIAL). The abogado who does intake can activate his own prospecto without a comercial. `cliente.ver` stays the four roles; `cliente.crear`/`cliente.editar` stay ADMINISTRADOR + COMERCIAL + JURIDICO.
+
+#### Scenario: Abogado converts
+- GIVEN a user holding only `RolEmpresa.JURIDICO` (not esAdminEmpresa)
+- WHEN they POST `/clientes/:id/convertir` on a same-empresa PROSPECTO
+- THEN it succeeds (200), the cliente becomes CLIENTE

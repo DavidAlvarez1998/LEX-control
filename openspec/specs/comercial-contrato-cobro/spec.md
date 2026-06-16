@@ -58,3 +58,18 @@ Every contrato/cobro endpoint MUST take `empresaId` from the token, hard-filter 
 - GIVEN a user of despacho A creating a `ContratoComercial`
 - WHEN `cotizacionId` references a `Cotizacion` of despacho B
 - THEN the write is rejected (cross-tenant reference)
+
+### Requirement: Cliente cartera summary is readable under the comercial module
+> ADDED by change `comercial-rol-portal`.
+
+The system MUST expose `GET /comercial/clientes/:id/cartera` returning the cliente's `Cartera` rows with their DERIVED saldo (`valorPagado`/`conSaldo`, reusing the contable cartera derivation), gated by `requireAuth` + `requirePermiso('comercial.cobro.ver')` (granted to `ADMINISTRADOR` + `COMERCIAL`) and the COMERCIAL módulo gate — it MUST NOT require the contable module or any contable permiso. It is READ-ONLY (no write path here) and hard-scoped by `WHERE { empresaId }` with `assertCliente` on the path id.
+
+#### Scenario: Comercial reads a client's cartera without contable
+- GIVEN a despacho whose contable module is NOT contracted and a user holding `comercial.cobro.ver`
+- WHEN they GET `/comercial/clientes/:id/cartera` for a same-empresa cliente
+- THEN they receive the cartera rows with derived saldo (200), not a "módulo contable no contratado" error
+
+#### Scenario: Cross-empresa cliente rejected
+- GIVEN a user of despacho A
+- WHEN they GET `/comercial/clientes/:id/cartera` for a cliente of despacho B
+- THEN it is rejected (assertCliente cross-tenant) and no cartera is returned
