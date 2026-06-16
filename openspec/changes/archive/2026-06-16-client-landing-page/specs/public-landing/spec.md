@@ -51,18 +51,28 @@ despacho, todo en un lugar, datos del juzgado al día); (5) a Planes section fed
 - WHEN the Planes section renders
 - THEN it shows a neutral fallback (e.g. "Escríbenos por un plan a tu medida") instead of a broken UI
 
-### Requirement: Demo request form
-The landing MUST include a "Solicitar demo" form (nombre del despacho, nombre de contacto, email,
-teléfono opcional, mensaje opcional) that POSTs to `/publico/solicitar-demo`, including a hidden
-honeypot field. On success it MUST show a confirmation ("Gracias, te contactaremos"); on validation
-error it MUST show the field message; it MUST NOT block the page on failure.
+### Requirement: Create-account form (despacho + admin + plan)
+The landing MUST include a "Crea tu cuenta" form (section `#cuenta`) grouped in two fieldsets —
+**Datos del despacho** (nombre del despacho [req], NIT, correo de la empresa, teléfono de la empresa)
+and **Usuario administrador** (nombre [req], correo [req, será su login], celular) — plus a **Plan de
+interés** selector populated from `GET /publico/planes`, and a hidden honeypot. It POSTs to
+`/publico/solicitud-cuenta`. The plan cards' "Quiero este plan" button MUST pre-select that plan and
+scroll to the form. On success it MUST show a confirmation explaining the request will be reviewed and
+the account activated (pending approval); on validation error it MUST show the message without
+clearing inputs; it MUST NOT block the page on failure. The hero/header CTAs point to `#cuenta`
+("Crear cuenta") and `/login` ("Ingresar"); a "¿Ya tienes cuenta? Ingresar" link sits under the form.
 
-#### Scenario: Successful demo request
-- GIVEN a visitor fills the demo form with valid data
+#### Scenario: Successful account request
+- GIVEN a visitor fills the form with despacho + admin data and picks a plan
 - WHEN they submit
-- THEN they see a success confirmation and the lead is captured (a `Prospecto` canal WEB)
+- THEN they see a "solicitud recibida, la revisaremos y activaremos tu cuenta" confirmation and a pending `Prospecto` (canal WEB) is captured with the chosen plan
+
+#### Scenario: Picking a plan from a card pre-fills the form
+- GIVEN the Planes section is rendered
+- WHEN the visitor clicks "Quiero este plan" on a plan card
+- THEN the page scrolls to the form and the Plan selector is pre-set to that plan
 
 #### Scenario: Validation feedback
-- GIVEN the email is malformed
+- GIVEN the admin email is malformed
 - WHEN the form is submitted
 - THEN the form shows the validation message and does not clear the inputs

@@ -34,10 +34,12 @@ del producto; el login deja de ser la primera pantalla.
 - **`GET /publico/planes`** — SIN auth. Proyección mínima de planes `activo=true`
   ordenados por `orden`: `{ clave, nombre, descripcion, precioMensual, modulos[], cuotas[] }`.
   No expone IDs internos de suscripción ni datos sensibles.
-- **`POST /publico/solicitar-demo`** — SIN auth. Crea un `Prospecto`
-  (`canalEntrada = WEB`, `estado = NUEVO`) con los datos del formulario. Protección
-  anti-spam básica: honeypot + validación zod + (opcional) rate-limit por IP. El lead
-  aterriza en `/prospectos` del admin (embudo comercial existente).
+- **`POST /publico/solicitud-cuenta`** — SIN auth. MODELO HÍBRIDO (pendiente de
+  aprobación): crea un `Prospecto` (`canalEntrada = WEB`, `estado = NUEVO`) con los
+  datos del despacho (nombre/NIT/correo/teléfono) + del usuario admin (nombre/correo/
+  teléfono) + plan elegido (`planClave → planInteresId`). NO da acceso: el equipo lo
+  aprueba (GANADO) y el flujo de ventas existente provisiona Empresa + admin +
+  suscripción. Anti-spam: honeypot + zod. El correo/teléfono de empresa van a `notas`.
 
 ## Impacto
 - Schema: **sin cambios** (reusa Plan/Prospecto existentes).

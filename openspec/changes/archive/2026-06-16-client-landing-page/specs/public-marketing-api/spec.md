@@ -28,18 +28,29 @@ tenant scope (the plan catalog is global).
 - WHEN a plan object is inspected
 - THEN it has no `id`, no `suscripciones`, and no field outside `{clave, nombre, descripcion, precioMensual, modulos, cuotas}`
 
-### Requirement: Public demo-request lead capture
-The system MUST expose `POST /publico/solicitar-demo` WITHOUT authentication that creates a `Prospecto`
-with `canalEntrada = WEB` and `estado = NUEVO` from a validated body `{ nombreEmpresa, nombreContacto,
-email, telefono?, mensaje? }` (zod: required nombres, valid email, lengths bounded). The lead lands in
-the platform's comercial funnel (`/prospectos`). The endpoint MUST include a honeypot field (e.g.
-`website`) that, when filled, makes the request a silent no-op (200, no row) to deflect bots. It MUST
-NOT echo internal errors and MUST NOT require or accept an `empresaId`/`estado` from the client.
+### Requirement: Public account-request capture (hybrid, pending approval)
+The system MUST expose `POST /publico/solicitud-cuenta` WITHOUT authentication that creates a
+`Prospecto` with `canalEntrada = WEB` and `estado = NUEVO` (= pending approval) from a validated body
+of despacho + admin + plan data: `{ nombreEmpresa, nit?, emailEmpresa?, telefonoEmpresa?,
+nombreContacto, email, telefono?, planClave? }` (zod: required `nombreEmpresa` + admin `nombreContacto`
++ valid admin `email`; the rest optional with bounded lengths). HYBRID model: the request grants NO
+access — it lands in the comercial funnel (`/prospectos`); the team approves it (GANADO) and the
+existing sales flow provisions Empresa + admin Usuario + Suscripción. The handler MUST map `nit →
+numeroDocumento`, admin `email → Prospecto.email` (the future login), resolve `planClave → planInteresId`
+(via the Plan catalog; unknown clave → null, no error), and fold `emailEmpresa`/`telefonoEmpresa` into
+`notas` (no dedicated columns). It MUST include a honeypot field `website` that, when filled, makes the
+request a silent no-op (200, no row). It MUST NOT echo internal errors and MUST NOT accept
+`empresaId`/`estado` from the client.
 
-#### Scenario: A visitor requests a demo
-- GIVEN a valid body with `nombreEmpresa`, `nombreContacto`, `email`
-- WHEN `POST /publico/solicitar-demo` is called (honeypot empty)
-- THEN a `Prospecto` is created with `canalEntrada = WEB`, `estado = NUEVO`, and 201 is returned
+#### Scenario: A visitor requests an account
+- GIVEN a valid body with `nombreEmpresa`, admin `nombreContacto` + `email`, and `planClave = "firma"`
+- WHEN `POST /publico/solicitud-cuenta` is called (honeypot empty)
+- THEN a `Prospecto` is created `canalEntrada = WEB`, `estado = NUEVO`, `planInteresId` resolved from `firma`, with empresa email/phone in `notas`, and 201 is returned
+
+#### Scenario: Unknown plan does not break the request
+- GIVEN a body whose `planClave` does not match any Plan
+- WHEN the endpoint is called
+- THEN the `Prospecto` is still created with `planInteresId = null` (201)
 
 #### Scenario: Honeypot deflects bots
 - GIVEN a body whose honeypot field `website` is non-empty
@@ -47,7 +58,7 @@ NOT echo internal errors and MUST NOT require or accept an `empresaId`/`estado` 
 - THEN no `Prospecto` is created and the response is a benign 200 (bot sees success)
 
 #### Scenario: Invalid payload rejected
-- GIVEN a body with a malformed `email` or missing `nombreContacto`
+- GIVEN a body with a malformed admin `email` or missing `nombreContacto`
 - WHEN the endpoint is called
 - THEN it is rejected 400 (zod) and no `Prospecto` is created
 

@@ -6,10 +6,11 @@ decisions:
   tono: saas-legal-moderno # marca índigo actual, Geist, claro/oscuro (Q usuario)
   secciones: hero+modulos+como-funciona+planes # (Q usuario, multiselect)
   planes_fuente: api-publica # GET /publico/planes de solo lectura (Q usuario)
-  cta: ingresar+solicitar-demo # /login + form que capta lead (Q usuario)
+  cta: ingresar+crear-cuenta # /login + form completo "Crear cuenta" (Q usuario; evolucionó de demo a cuenta)
   routing: landing-en-raiz # `/` = landing pública; home dashboard → /inicio; resto de rutas igual
   schema: no-change # reusa Plan + Prospecto existentes
-  demo_lead: prospecto-web # POST /publico/solicitar-demo crea Prospecto(canalEntrada=WEB, estado=NUEVO)
+  crear_cuenta: hibrido-pendiente-aprobacion # POST /publico/solicitud-cuenta crea Prospecto(WEB,NUEVO=pendiente) con empresa+admin+plan; el equipo aprueba (GANADO)→provisiona Empresa+admin+suscripción (flujo ventas existente). Sin acceso hasta aprobar (Q usuario)
+  campos_cuenta: empresa(nombre+nit+correo+tel)+admin(nombre+correo+tel)+plan # Q usuario multiselect
   anti_spam: honeypot # write público → honeypot + zod estricto (captcha fuera de alcance v1)
   wip_conflict: nav.tsx # el repunte de "Inicio"→/inicio toca nav.tsx (archivo en WIP paralelo del usuario)
 phases:
@@ -18,9 +19,9 @@ phases:
   spec: delta # specs/public-landing (frontend) + specs/public-marketing-api (backend)
   design: done # landing en /, home→/inicio; 2 endpoints públicos /publico; proyección mínima planes; demo→prospecto WEB
   tasks: done
-  apply: done # backend: modules/publico (GET /planes + POST /solicitar-demo, honeypot) montado en /publico. frontend: app/page.tsx landing + 7 secciones, lib/publico-api.ts, home dashboard movido a /inicio (git mv (dashboard)/page.tsx), repunte de 5 refs (nav.tsx, login, sidebar, 2 guards). Sin cambio de schema
-  verify: green # API build + 406 tests (publico.test.ts 7/7) + smoke en vivo (GET /publico/planes 200 sin token con planes reales; POST solicitar-demo 201 + limpieza). Cliente build verde + landing renderiza en / + /inicio y /login 200
-  archive: pending # tras commit/merge — decisión del usuario
+  apply: done # backend: modules/publico (GET /planes + POST /solicitud-cuenta híbrido con plan+empresa+admin, honeypot) en /publico. frontend: app/page.tsx landing 7 secciones + form "Crear cuenta" (2 fieldsets+selector de plan, "Quiero este plan" pre-selecciona) + ANIMACIONES (Reveal/IntersectionObserver, blobs, gradient-text, hover lift/sheen, prefers-reduced-motion en globals.css), lib/publico-api.ts, home→/inicio (git mv), repunte 5 refs. Sin cambio de schema
+  verify: green # API build + 407 tests (publico.test.ts 8/8) + smoke e2e en vivo (GET /publico/planes 200 sin token planes reales; POST /solicitud-cuenta 201 → Prospecto pendiente con NIT+plan resuelto+empresa en notas, limpiado). Cliente build verde + landing renderiza form+animaciones en /; /inicio y /login 200
+  archive: done # specs canónicas creadas (public-landing + public-marketing-api); commits api d76384e/client b2a7645/admin 3d29c35; WIP tutela/seguimiento intacto. SIN push (decisión usuario)
 capabilities:
   added:
     - public-landing # homepage pública del portal cliente + routing (home→/inicio) + secciones + form demo
