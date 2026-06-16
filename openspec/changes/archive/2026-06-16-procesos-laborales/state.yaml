@@ -20,7 +20,7 @@ phases:
   tasks: done
   apply: done # enum GrupoProceso.LABORAL (pnpm push), tipo "Proceso Laboral" sembrado (37 campos/14 etapas) + stub viejo borrado de la BD; frontend: GrupoProceso+SECCION_RUTA/LABEL, nav item, /procesos-laborales (page+nuevo+[id]), wizard genérico excluye LABORAL, ficha back-link LABORAL
   verify: green # ambos builds verdes (client + tsc API); smoke de motor: Demandante·Única (sin contestacion, audienciaUnica) y Demandado·Doble (contestacion+art77+art80) ramifican OK; plazos 10 háb→2026-07-01 (salta festivo 29-jun), 5 háb→06-23, 3 calend→06-19; subsanacion solo en INADMISIÓN
-  archive: pending # tras commit/merge — decisión del usuario
+  archive: done # 2026-06-16: deltas fusionados a specs/tramite-catalog (3 req) + tramite-management (5 req) con nota "> ADDED by change procesos-laborales"; carpeta movida a changes/archive/2026-06-16-procesos-laborales
 capabilities:
   modified:
     - tramite-catalog # nuevo GrupoProceso LABORAL + tipo "Proceso Laboral" sembrado + sección/ruta
