@@ -1,0 +1,40 @@
+change: procesos-laborales
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "usa SDD para estudiar el flujo de una nueva vista 'Procesos Laborales' debajo de Acciones Constitucionales; doc en openspec/roadmap-docs"
+  fuente_verdad: doc-procedimiento-laboral # openspec/roadmap-docs/"PROCEDIMIENTO LABORAL - CORREGIDO 15 DE JUNIO.docx" (Ley 2452/2025, CPTSS)
+  modelado: opcion-1-un-tipo-con-selects # 1 TipoProceso "Proceso Laboral" + selects rol + tipoInstancia que ramifican (Q usuario; vs 2 tipos por instancia o 4 tipos)
+  sin_cambio_motor: etapas-por-instancia_campos-por-rol # diseño evita AND: disponibleSi gatea etapas por tipoInstancia; mostrarSi gatea campos por rol/decisión (una sola condición c/u)
+  taxonomia: nuevo-grupo-LABORAL # enum GrupoProceso += LABORAL; SECCION_RUTA[LABORAL]=/procesos-laborales; nav debajo de Acciones Constitucionales; /procesos/nuevo excluye LABORAL
+  esJudicial: true # radicado(23díg)/juzgado/cuantía = campos built-in del form judicial (no redefinir)
+  plazos: doc-manda # contestación 10 HÁBILES (notificación); subsanación 5 HÁBILES (inadmisión); recurso 3 CALENDARIO (sentencia/rechazo). Regla: créele al doc (hábil/calendario según lo diga); el doc no califica los 3 → usuario eligió calendario. reusa diasHabiles.ts + derivarFechaLimite
+  schema: enum-add-only # +1 valor GrupoProceso.LABORAL; sin tablas/columnas; pnpm push (no migrate)
+  stub_obsoleto: eliminar-ordinario-1a-instancia # "Proceso ordinario laboral de primera instancia" queda superado por "Proceso Laboral"
+  alcance: diseno-primero # este change = proposal+design+spec+tasks; implementación (seed+frontend) tras OK del usuario
+phases:
+  explore: done # leído el doc completo (292 párrafos); mapeado motor (esquema.ts solo igualdad), seed (DdP/Tutela como referencia de ramas + 4 stubs laborales), taxonomía (GrupoProceso, SECCION_RUTA, nav), formato openspec
+  propose: done
+  spec: delta # specs/tramite-catalog (grupo LABORAL + tipo sembrado) + specs/tramite-management (workflow rol×instancia)
+  design: done # design.md: árbol de etapas (orden + ramas por tipoInstancia), esquemaFormulario por bloques, reglas/plazos por etapa, taxonomía/nav, riesgos
+  tasks: done
+  apply: done # enum GrupoProceso.LABORAL (pnpm push), tipo "Proceso Laboral" sembrado (37 campos/14 etapas) + stub viejo borrado de la BD; frontend: GrupoProceso+SECCION_RUTA/LABEL, nav item, /procesos-laborales (page+nuevo+[id]), wizard genérico excluye LABORAL, ficha back-link LABORAL
+  verify: green # ambos builds verdes (client + tsc API); smoke de motor: Demandante·Única (sin contestacion, audienciaUnica) y Demandado·Doble (contestacion+art77+art80) ramifican OK; plazos 10 háb→2026-07-01 (salta festivo 29-jun), 5 háb→06-23, 3 calend→06-19; subsanacion solo en INADMISIÓN
+  archive: pending # tras commit/merge — decisión del usuario
+capabilities:
+  modified:
+    - tramite-catalog # nuevo GrupoProceso LABORAL + tipo "Proceso Laboral" sembrado + sección/ruta
+    - tramite-management # workflow ordinario laboral ramificado por rol × instancia + plazos hábiles
+applies_to:
+  - TipoProceso "Proceso Laboral" (ORDINARIA_LABORAL, grupo LABORAL, esJudicial)
+  - Proceso (instancias laborales)
+follow_ups:
+  - Plantillas de documento laborales (generación de demanda/contestación) — change aparte
+  - Migrar los stubs laborales restantes (ejecutivo, fuero sindical, pensión invalidez) a grupo LABORAL
+  - Liquidación automática de pretensiones/cuantía
+next: Revisión del usuario del design.md (árbol de etapas) → al aprobar, aplicar seed-tipos.json + enum + frontend (sección/ruta/nav), pnpm push + re-seed, build + smoke.
+notes: |
+  Creado 2026-06-16 (rama feat/cuenta-clientes), SDD a pedido del usuario ([[usar-openspec-decisiones-diseno]]).
+  Modelado Opción 1 confirmado por el usuario. CLAVE: el motor de condiciones es solo igualdad (sin AND/OR);
+  el árbol se diseñó para que ningún gate necesite rol Y instancia a la vez → CERO cambio de motor. El doc
+  es la fuente de verdad legal por encima de la interpretación. Aún SIN tocar seed ni frontend.
