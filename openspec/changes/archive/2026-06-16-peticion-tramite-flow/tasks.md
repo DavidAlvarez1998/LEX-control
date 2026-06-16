@@ -24,7 +24,7 @@
 ## 4. Verify
 - [x] 4.1 `pnpm seed:catalogo` re-applied; DB reflects fields/labels.
 - [x] 4.2 API + client `tsc --noEmit` clean; routes compile (200).
-- [ ] 4.3 Manual smoke per type (create → radicar → respuesta → reiterar/escalar).
+- [x] 4.3 Smoke e2e por HTTP (scripts/smoke-peticion-flow.ts, 13/13): crear→radicar→respuesta→reiterar/escalar + plantillas + caso.
 
 ## 5. Archive
 - [x] 5.1 Merge the delta into `openspec/specs/tramite-management/spec.md` and move this change to `archive/`.

@@ -10,7 +10,7 @@
 
 ## 3. Verify
 - [x] 3.1 `pnpm seed:catalogo`; API + client `tsc` clean.
-- [ ] 3.2 Manual smoke: respond SI by correo → acuse-correo offered; by físico → constancia-envio offered; medio required to complete the stage.
+- [x] 3.2 Smoke e2e (scripts/smoke-peticion-flow.ts): contestar SI sin medioRespuesta → 400; con medio → avanza; plantilla respuesta renderiza.
 
 ## 4. Archive
 - [x] 4.1 Merge delta into `openspec/specs/tramite-management/spec.md`; move to `archive/`.
