@@ -297,3 +297,110 @@ When the move is rejected because required DOCUMENTS are missing (the `400` `doc
 - GIVEN a stage that requires both a missing field and a missing document
 - WHEN the lawyer clicks it
 - THEN the form opens in edit mode, missing fields are marked, and the missing documents are named in the pointer message
+
+### Requirement: Creation form hides stage-only fields (`soloFicha`)
+> ADDED by change `peticion-tramite-flow`.
+
+A field in `esquemaFormulario` MAY declare `soloFicha: true`. Such a field MUST NOT render in the
+**creation** form and MUST NOT be validated as required at creation. It MUST render in the **ficha** form
+so it can be filled while advancing stages. Fields not marked `soloFicha` render at creation as before.
+
+#### Scenario: Radication fields absent at creation
+- GIVEN a `Derecho de Petición` whose `fechaRadicacion`, `nroRadicado`, `contestaron` are `soloFicha`
+- WHEN a USUARIO opens the creation form
+- THEN those fields are not shown and do not block submission
+- AND they appear in the ficha when advancing to the Radicación / Respuesta stages
+
+### Requirement: Two radicado dates for entity-trámites
+> ADDED by change `peticion-tramite-flow`.
+
+An entity-trámite MUST distinguish two dates: `fechaRadicado` ("Fecha de radicación de solicitud"),
+captured at creation as a reference and NOT driving any term; and `fechaRadicacion` ("Fecha de radicación
+del proceso"), the entity's acuse-de-recibo date that MUST be the `plazoDesdeCampo` from which the legal
+term is computed. `nroRadicado` MUST represent the radicado number assigned by the receiving entity.
+
+#### Scenario: Term runs from the entity's radication date
+- GIVEN a `Derecho de Petición` of type "General" (15 días hábiles)
+- WHEN `fechaRadicacion` is set at the Radicación stage
+- THEN `fechaLimite` is computed from `fechaRadicacion`, not from `fechaRadicado`
+
+### Requirement: Auto-generated title for non-judicial trámites
+> ADDED by change `peticion-tramite-flow`.
+
+When the trámite's `TipoProceso.esJudicial = false`, the system MUST auto-generate `titulo` as
+`"{TipoProceso.nombre} — {entidad}"` and MUST hide the manual title field at creation. The title MUST be
+editable from the ficha. Judicial types keep the manual title.
+
+#### Scenario: DdP title derived from entity
+- GIVEN a non-judicial `Derecho de Petición` with `entidad = "Colpensiones"`
+- WHEN it is created without a manual title
+- THEN `titulo` is `"Derecho de Petición — Colpensiones"`
+
+### Requirement: Reiteración templates require a derived trámite
+> ADDED by change `peticion-tramite-flow`.
+
+A `PlantillaDocumento` whose `contenido` references `{{casoBase...}}` MUST only be offered by
+`GET /procesos/:id/plantillas` and accepted by `POST /procesos/:id/documentos/generar` and `/render`
+when the trámite has `casoRelacionadoId != null`. On the original trámite it MUST be hidden, and direct
+generation MUST be rejected with 422.
+
+#### Scenario: Reiteración template hidden on the original
+- GIVEN an original `Derecho de Petición` (no `casoRelacionadoId`)
+- WHEN the document generator lists templates
+- THEN "Reiteración de la petición" is not listed
+- AND generating it returns 422
+
+#### Scenario: Reiteración template available on the derivative
+- GIVEN a reiterated `Derecho de Petición` (`casoRelacionadoId` set)
+- WHEN the document generator lists templates
+- THEN "Reiteración de la petición" is listed and can be generated
+
+### Requirement: Derivative inherits the responsible lawyer
+> ADDED by change `peticion-tramite-flow`.
+
+When `POST /procesos/:id/derivar` creates a `crearDerivado` trámite (reiteración or tutela), the new
+trámite MUST inherit `responsableId` from the base trámite.
+
+#### Scenario: Reiteración keeps the base lawyer
+- GIVEN a `Derecho de Petición` whose `responsable` is lawyer L
+- WHEN a reiteración is derived from it
+- THEN the derivative's `responsableId` equals L
+
+### Requirement: Response stage naming
+> ADDED by change `peticion-tramite-flow` (renames the prior "Contestación" stage to "Respuesta").
+
+The response stage of entity-trámites MUST be labelled **"Respuesta"** (previously "Contestación"). Its
+rules MUST require, when `contestaron = SI`, the fields `fechaRespuesta` and the document `respuesta.pdf`;
+when `contestaron = PARCIAL`, the fields `fechaRespuestaParcial` and `queFalto` plus `respuesta.pdf`, and
+MAY offer an optional `recurso.pdf`. The informational field `respuestaDeFondo` MUST NOT be required (it
+was removed as redundant with `contestaron`).
+
+#### Scenario: Optional recurso on partial response
+- GIVEN a `Reclamación Administrativa` at the "Respuesta" stage with `contestaron = PARCIAL`
+- WHEN the response is recorded
+- THEN `recurso.pdf` is offered as an optional document (not blocking)
+
+### Requirement: Send channel and proof when answering a received petition
+> ADDED by change `ddp-recibido-completion`.
+
+For `Derecho de Petición Recibido`, when we record that the petition was answered, the "Respuesta" stage
+MUST require the send channel `medioRespuesta` for `contestada = SI` and `contestada = PARCIAL` (alongside
+`fechaContestacion` and the `respuesta.pdf` document). The system MUST offer an optional proof-of-sending
+document that depends on the channel: `acuse-correo.pdf` when `medioRespuesta = "Correo electrónico"`, and
+`constancia-envio.pdf` when `medioRespuesta = "Físico"`. The proof document MUST NOT block stage advance.
+
+#### Scenario: Answer by email
+- GIVEN a `Derecho de Petición Recibido` at the "Respuesta" stage
+- WHEN `contestada = SI` and `medioRespuesta = "Correo electrónico"`
+- THEN `fechaContestacion`, `medioRespuesta` and `respuesta.pdf` are required to complete the stage
+- AND `acuse-correo.pdf` is offered as an optional document
+
+#### Scenario: Answer physically
+- GIVEN a `Derecho de Petición Recibido` at the "Respuesta" stage
+- WHEN `contestada = SI` and `medioRespuesta = "Físico"`
+- THEN `constancia-envio.pdf` is offered as an optional document
+
+#### Scenario: Channel is mandatory to complete the response
+- GIVEN `contestada = SI` with `fechaContestacion` and `respuesta.pdf` provided
+- WHEN `medioRespuesta` is empty
+- THEN the stage cannot be completed until `medioRespuesta` is set

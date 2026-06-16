@@ -1,0 +1,28 @@
+change: peticion-tramite-flow
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  field_staging: soloFicha # hidden at creation, shown in ficha when advancing stages
+  radicado_model: two-dates # fechaRadicado (solicitud, reference) vs fechaRadicacion (proceso, starts term)
+  nro_radicado_source: entity # radicado de recibido assigned by the receiving entity
+  auto_title: non-judicial # "{Tipo} — {entidad}" when esJudicial=false, editable in ficha
+  response_stage_name: Respuesta # was Contestación
+  reiteracion_template_gate: casoBase-requires-derived
+  derivative_responsable: inherit-from-base
+phases:
+  explore: done (inline, doc DERECHO DE PETICIÓN - JUAN DAVID.docx)
+  propose: done
+  spec: done # delta on tramite-management
+  design: n/a # data-driven, no schema change
+  tasks: done
+  apply: done # DdP + Reclamación Administrativa in seed; API gating + responsable; client UX
+  verify: builds-pass # seed re-applied, api/client tsc clean, routes 200; manual smoke pending
+  archive: pending # merge delta into specs/tramite-management + move to archive/
+applies_to:
+  - Derecho de Petición
+  - Reclamación Administrativa
+follow_ups:
+  - Constitución de Renuencia + Derecho de Petición Recibido (same standard)
+  - Reclamación templates (legal text)
+  - editable responsable in ficha + backfill pre-fix derivatives
+next: manual smoke per type, then archive
