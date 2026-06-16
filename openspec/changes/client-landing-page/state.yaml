@@ -1,0 +1,35 @@
+change: client-landing-page
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "crea una landing page para el front de cliente; será la página web; usa SDD; en lugar del login simple, va esta primero"
+  tono: saas-legal-moderno # marca índigo actual, Geist, claro/oscuro (Q usuario)
+  secciones: hero+modulos+como-funciona+planes # (Q usuario, multiselect)
+  planes_fuente: api-publica # GET /publico/planes de solo lectura (Q usuario)
+  cta: ingresar+solicitar-demo # /login + form que capta lead (Q usuario)
+  routing: landing-en-raiz # `/` = landing pública; home dashboard → /inicio; resto de rutas igual
+  schema: no-change # reusa Plan + Prospecto existentes
+  demo_lead: prospecto-web # POST /publico/solicitar-demo crea Prospecto(canalEntrada=WEB, estado=NUEVO)
+  anti_spam: honeypot # write público → honeypot + zod estricto (captcha fuera de alcance v1)
+  wip_conflict: nav.tsx # el repunte de "Inicio"→/inicio toca nav.tsx (archivo en WIP paralelo del usuario)
+phases:
+  explore: done # routing actual (app/(dashboard)/page.tsx=/, /login, /activar), Plan+Prospecto models, GET /planes gating
+  propose: done
+  spec: delta # specs/public-landing (frontend) + specs/public-marketing-api (backend)
+  design: done # landing en /, home→/inicio; 2 endpoints públicos /publico; proyección mínima planes; demo→prospecto WEB
+  tasks: done
+  apply: done # backend: modules/publico (GET /planes + POST /solicitar-demo, honeypot) montado en /publico. frontend: app/page.tsx landing + 7 secciones, lib/publico-api.ts, home dashboard movido a /inicio (git mv (dashboard)/page.tsx), repunte de 5 refs (nav.tsx, login, sidebar, 2 guards). Sin cambio de schema
+  verify: green # API build + 406 tests (publico.test.ts 7/7) + smoke en vivo (GET /publico/planes 200 sin token con planes reales; POST solicitar-demo 201 + limpieza). Cliente build verde + landing renderiza en / + /inicio y /login 200
+  archive: pending # tras commit/merge — decisión del usuario
+capabilities:
+  added:
+    - public-landing # homepage pública del portal cliente + routing (home→/inicio) + secciones + form demo
+    - public-marketing-api # GET /publico/planes (read-only) + POST /publico/solicitar-demo (lead WEB)
+notes: |
+  Creado 2026-06-16. Plan SDD a pedido del usuario ([[usar-openspec-decisiones-diseno]]). La landing
+  pasa a ser la cara pública del portal cliente; el login deja de ser la primera pantalla. Sin cambios
+  de schema (reusa Plan + Prospecto). 2 endpoints públicos nuevos (única superficie sin auth además de
+  login/activación). El repunte "Inicio"→/inicio toca nav.tsx, que está en el WIP paralelo del usuario
+  (quitar Seguimiento) — coordinar al aplicar.
+next: Aplicar backend (router /publico + tests) y frontend (landing en /, mover home a /inicio,
+  componentes, lib pública). Build + smoke. Decidir commit/merge.
