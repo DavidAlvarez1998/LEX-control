@@ -1,0 +1,38 @@
+change: tutela-form-hibrida
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "el formato de tutela del doc Juan David se ve mucho más corto/simple; ¿podemos basarnos en él? ¿dañaría peticiones?"
+  fuente_verdad: doc-derecho-peticion-juan-david # openspec/roadmap-docs/"DERECHO DE PETICIÓN - JUAN DAVID.docx": la tutela = adjuntar PDF + tracking, no intake sustantivo
+  modelo: hibrido # vs doc-puro (borrar campos, perder generación) vs form-largo-actual. Campos opcionales+soloFicha → form corto Y se conserva DEMANDA_TUTELA
+  entidadAccionada_en_creacion: true # único campo sustantivo visible al crear; identifica la tutela y alimenta el título auto
+  titulo_tutela: auto # antes manual (tituloAuto=!esJudicial); ahora auto "Tipo — Entidad" para grupo CONSTITUCIONAL, editable luego; demás judiciales siguen manual
+  gate_etapas: adjuntar-no-tipear # radicacion exige [entidadAccionada]+demanda.pdf (no hechos/pretensión); falloPrimera no exige pretensión (basta sentencia.pdf)
+  plantilla: intacta # DEMANDA_TUTELA no se toca; los campos siguen existiendo (opcionales) → generación viva
+  no_toca_peticiones: true # DdP/reclamación/renuencia/DdP-recibido/Tutela-recibida son tipos separados; esquemas independientes
+  sin_schema: true # ninguna columna/enum nuevo; solo seed-tipos.json + re-seed
+phases:
+  explore: done # extraído el formato de tutela del docx; mapeado acoples: plantilla DEMANDA_TUTELA, etapas (camposRequeridos/documentos), derivación (copiarDatos vacío), soloFicha (creación filtra !soloFicha, ficha renderiza todo)
+  propose: done
+  spec: delta # specs/tramite-catalog: tutela creation-light/ficha-complete + gate adjuntar-no-tipear + título auto CONSTITUCIONAL
+  design: inline # decisiones en proposal.md (no design.md aparte; cambio acotado)
+  tasks: inline
+  apply: done # seed-tipos.json (8 sustantivos + 9 tracking → soloFicha+opcional; entidadAccionada queda; radicacion/falloPrimera relajados) + procesos/nuevo/page.tsx (título auto CONSTITUCIONAL) + re-seed catálogo (38 tipos, 7 plantillas)
+  verify: green # API 407/407 tests (incl. plantillas-seed 5, plantilla 22, seed-tipos 4); JSON válido; client build del título auto verde en aislado. (Build client global rojo por WIP concurrente LABORAL/procesos-laborales, ajeno)
+  archive: pending # tras commit/merge — decisión del usuario
+capabilities:
+  modified:
+    - tramite-catalog # tutela híbrida (creation-light + soloFicha) + gate adjuntar-no-tipear + título auto CONSTITUCIONAL
+applies_to:
+  - TipoProceso "Acción de tutela" (CONSTITUCIONAL, esJudicial)
+  - procesos/nuevo (título auto del portal cliente)
+follow_ups:
+  - "Acción de Tutela (Recibida)" (defensiva): aplicar la misma simplificación si se desea — change aparte
+  - Revisar el wizard genérico /procesos/nuevo para tutela standalone (cliente/accionante)
+next: Commit/merge a criterio del usuario; al archivar, fusionar la delta a openspec/specs/tramite-catalog/spec.md.
+notes: |
+  Creado 2026-06-16 (rama feat/cuenta-clientes), SDD a pedido del usuario ([[usar-openspec-decisiones-diseno]]).
+  El doc Juan David es la fuente de verdad: la tutela se ADJUNTA, no se redacta en el form. El híbrido conserva
+  la generación (DEMANDA_TUTELA) dejando los campos opcionales+soloFicha. NO toca DdP ni otros tipos (independientes).
+  Build client global quedó rojo por trabajo concurrente del usuario (grupo LABORAL sin LABORAL en enum GrupoProceso),
+  ajeno a este change; el cambio de título auto compiló verde en su primer build aislado.
