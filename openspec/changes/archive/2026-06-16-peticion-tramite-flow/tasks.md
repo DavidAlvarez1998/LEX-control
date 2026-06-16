@@ -7,7 +7,7 @@
 - [x] 1.3 `Reclamación Administrativa` templates (plantillas-seed.ts): "Reclamación administrativa" (base) + "Reiteración de la reclamación" (uses `{{casoBase...}}`).
 - [x] 1.4 `Constitución de Renuencia`: fields + `soloFicha` + "Respuesta" + base template "Constitución de renuencia". Per the Juan David doc, plazo stays **15 días hábiles** and escalation stays **Acción de tutela** (doc is source of truth over the strict Ley 393 reading of 10 días / acción de cumplimiento).
 - [x] 1.5 `Derecho de Petición Recibido`: `contestada` + `observacionContestacion` → `soloFicha`; stage "Contestación" → "Respuesta"; auto-title now uses `peticionario` (reception fields `radicadoIngreso`/`fechaRecepcion` stay at creation).
-- [ ] 1.6 (follow-up) Generable template for `Derecho de Petición Recibido` (our written response to the petitioner).
+- [x] 1.6 Generable template for `Derecho de Petición Recibido` (our written response): plantilla "Respuesta a la petición recibida" en plantillas-seed.ts.
 
 ## 2. API (procesos.router.ts)
 - [x] 2.1 GET `/:id/plantillas`: hide `{{casoBase}}` templates unless `casoRelacionadoId != null`.
