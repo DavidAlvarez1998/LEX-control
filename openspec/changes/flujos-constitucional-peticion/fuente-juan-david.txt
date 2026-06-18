@@ -1,0 +1,233 @@
+
+DERECHO DE PETICIÓN:
+
+SOLICITAR: 
+Entidad a la que se le solicitará la petición. (texto en blanco)
+Correo electrónico: (texto en blanco)
+Fecha de radicado
+Tipo  de derecho de petición
+General – (15 días hábiles)
+Documental (10 días hábiles)
+Consulta (30 días hábiles)
+¿Qué desea para solicitar?}
+☐ Información☐ Copia de documentos☐ Certificación☐ Historia laboral☐ Historia clínica☐ Estado de trámite☐ Pago pendiente☐ Reconocimiento de derecho☐ Corrección de información☐ Habeas data☐ Solicitud laboral☐ Salud☐ Seguridad social☐ Queja☐ Reclamo☐ Consulta☐ Otro
+
+PDF Para cargar el documento 
+Requiere poder  SI NO – SI SI cargar PDF PODER
+Envío físico – envío correo electrónico
+Fecha de radicación proceso de derecho de petición
+Nro de radicado
+Fecha de Vencimiento  (automático dependiendo del derecho de petición)
+Contestaron  SI - PARCIALMENTE-  NO 
+
+PARCIALMENTE – Reiteración del Derecho de petición – Cargar PDF 
+                                       Fecha de radicación 
+           Contestaron: SI – PARCIAL – NO 
+
+- RECURSO: Cargar PDF 
+                             - Acción de tutela  - Cargar PDF (enlace de tutela)
+
+Demanda  PDF 
+Pruebas PDF 
+Anexos  PDF 
+
+Radicado de la tutela  (campo numérico)
+ADMITIERON LA TUTELA – SI NO 
+Auto admisorio – PDF
+
+FALLO: Favorable o desfavorable
+PDF de la sentencia de tutela
+
+IMPUGNACIÓN DE LA SENTENCIA: SI o NO
+
+FALLO DE SEGUNDA INSTANCIA – Favorable o desfavorable 
+
+NO – - Acción de tutela  - Cargar PDF (enlace de tutela)
+
+Demanda  PDF 
+Pruebas PDF 
+Anexos  PDF 
+
+Radicado de la tutela  (campo numérico)
+ADMITIERON LA TUTELA – SI NO 
+Auto admisorio – PDF
+
+FALLO: Favorable o desfavorable
+PDF de la sentencia de tutela
+
+IMPUGNACIÓN DE LA SENTENCIA: SI o NO
+
+FALLO DE SEGUNDA INSTANCIA – Favorable o desfavorable 
+
+        - Terminación de la petición
+RECIBIR – DERECHO DE PETICIÓN
+RECIBIR 
+Radicado de ingreso: (alfanumérico)
+Fecha de recepción
+Persona o entidad que realiza la petición. (texto en blanco)
+Correo electrónico: (texto en blanco)
+Dirección: (Texto en blanco)
+Tipo  de derecho de petición
+General – (15 días hábiles)
+Documental (10 días hábiles)
+Consulta (30 días hábiles)
+Fecha de Vencimiento  (automático dependiendo del derecho de petición)
+
+¿Qué  están solicitando?
+☐ Información☐ Copia de documentos☐ Certificación☐ Historia laboral☐ Historia clínica☐ Estado de trámite☐ Pago pendiente☐ Reconocimiento de derecho☐ Corrección de información☐ Habeas data☐ Solicitud laboral☐ Salud☐ Seguridad social☐ Queja☐ Reclamo☐ Consulta☐ Otro (casilla en blanco para diligenciar)
+
+PDF Para cargar el documento 
+Radicado
+Contestación del derecho de petición cargar pdf
+Fecha en que se contestó la petición
+Envío : Envío correo electrónico   - o – envío físico
+Envío correo electrónico – Cargar PDF
+Envío físico – Cargar PDF 
+
+¿La petición  se contestó?  SI - PARCIALMENTE-  NO 
+
+PARCIALMENTE – Reiteraron el Derecho de petición – Cargar PDF 
+                                       Fecha de radicación 
+           Contestaron: SI – PARCIAL – NO 
+
+- RECURSO: Cargar PDF 
+                             - Acción de tutela  - Cargar PDF (enlace de tutela)
+
+Demanda  PDF 
+Pruebas PDF 
+Anexos  PDF 
+
+Radicado de la tutela  (campo numérico)
+ADMITIERON LA TUTELA – SI NO 
+Auto admisorio – PDF
+
+FALLO: Favorable o desfavorable
+PDF de la sentencia de tutela
+
+IMPUGNACIÓN DE LA SENTENCIA: SI o NO
+
+FALLO DE SEGUNDA INSTANCIA – Favorable o desfavorable 
+
+NO – - Acción de tutela  - Cargar PDF (enlace de tutela)
+
+Demanda  PDF 
+Pruebas PDF 
+Anexos  PDF 
+
+Radicado de la tutela  (campo numérico)
+ADMITIERON LA TUTELA – SI NO 
+Auto admisorio – PDF
+
+FALLO: Favorable o desfavorable
+PDF de la sentencia de tutela
+
+IMPUGNACIÓN DE LA SENTENCIA: SI o NO
+
+FALLO DE SEGUNDA INSTANCIA – Favorable o desfavorable 
+
+        - Terminación de la petición
+
+
+RECLAMACIÓN ADMINISTRATIVA 
+Entidad a la que se le solicitará la petición. (texto en blanco)
+Correo electrónico: (texto en blanco)
+Tipo  de derecho de petición
+General – (15 días hábiles)
+Documental (10 días hábiles)
+Consulta (30 días hábiles)
+¿Qué desea para solicitar?}
+☐ Información☐ Copia de documentos☐ Certificación☐ Historia laboral☐ Historia clínica☐ Estado de trámite☐ Pago pendiente☐ Reconocimiento de derecho☐ Corrección de información☐ Habeas data☐ Solicitud laboral☐ Salud☐ Seguridad social☐ Queja☐ Reclamo☐ Consulta☐ Otro – Casilla en blanco 
+
+PDF Para cargar el documento 
+Requiere poder  SI NO – SI SI cargar PDF PODER
+Envío físico – envío correo electrónico
+Fecha de radicación proceso de derecho de petición
+Nro de radicado
+Fecha de Vencimiento  (automático dependiendo del derecho de petición)
+Contestaron  SI - PARCIALMENTE-  NO 
+
+PARCIALMENTE – Reiteración del Derecho de petición – Cargar PDF 
+                                       Fecha de radicación 
+           Contestaron: SI – PARCIAL – NO 
+                             - Acción de tutela  - Cargar PDF (enlace de tutela)
+
+Demanda  PDF 
+Pruebas PDF 
+Anexos  PDF 
+
+Radicado de la tutela  (campo numérico)
+ADMITIERON LA TUTELA – SI NO 
+Auto admisorio – PDF
+
+FALLO: Favorable o desfavorable
+PDF de la sentencia de tutela
+
+IMPUGNACIÓN DE LA SENTENCIA: SI o NO
+
+FALLO DE SEGUNDA INSTANCIA – Favorable o desfavorable 
+
+NO – - Acción de tutela  - Cargar PDF (enlace de tutela)
+
+Demanda  PDF 
+Pruebas PDF 
+Anexos  PDF 
+
+Radicado de la tutela  (campo numérico)
+ADMITIERON LA TUTELA – SI NO 
+Auto admisorio – PDF
+
+FALLO: Favorable o desfavorable
+PDF de la sentencia de tutela
+
+IMPUGNACIÓN DE LA SENTENCIA: SI o NO
+
+FALLO DE SEGUNDA INSTANCIA – Favorable o desfavorable 
+
+        - Terminación de la petición
+CONSTITUCIÓN DE RENUENCIA  LEY 393 
+Entidad a la que se le solicitará la petición. (texto en blanco)
+Correo electrónico: (texto en blanco)
+Tipo de petición
+General – (15 días hábiles)
+¿Qué desea para solicitar?}
+BLANCO
+
+PDF Para cargar el documento 
+Requiere poder  SI NO – SI SI cargar PDF PODER
+Envío físico – envío correo electrónico
+Fecha de radicación proceso de derecho de petición
+Nro de radicado
+Fecha de Vencimiento  (automático dependiendo del derecho de petición)
+Contestaron  SI - PARCIALMENTE-  NO 
+
+Anexar contestación 
+ACCIÓN DE TUTELA
+Acción de tutela  - Cargar PDF (enlace de tutela)
+
+Demanda  PDF 
+Pruebas PDF 
+Anexos  PDF 
+
+Radicado de la tutela  (campo numérico)
+ADMITIERON LA TUTELA – SI NO 
+Auto admisorio – PDF
+Fecha Auto Admisorio
+
+FALLO: Favorable o desfavorable
+PDF de la sentencia de tutela
+Fecha del fallo
+
+IMPUGNACIÓN DE LA SENTENCIA: SI o NO
+SI SI- Fecha de la sentencia 
+
+FALLO DE SEGUNDA INSTANCIA – Favorable o desfavorable 
+
+INCIDENTE DE DESACATO: SI o NO 
+
+SI- Fecha
+
+SI SI: Escrito PDF
+
+Fallo PDF
+
+

@@ -1,0 +1,36 @@
+change: tutela-seguimiento-flujo
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "el radicado de la tutela es cuando responde el juzgado, no al enviarla; va en la vista siguiente con los pasos (como peticiones); auto admisorio=documento→opción adjuntar; fallo favorable/desfavorable+subir fallo; impugnación sí→fecha; etc. busca el flujo de la vida real y aterrízalo con el doc"
+  fuente_verdad: doc-derecho-peticion-juan-david + decreto-2591-1991 # doc Juan David (sección ACCIÓN DE TUTELA) aterrizado con el procedimiento real de tutela
+  hueco_real: ficha-sin-slots-de-subida-para-tutela # los bloques de adjuntos con nombre se anclaban a requierePoder/queSolicita/contestaron/contestada; la tutela no los tiene → no había dónde subir auto admisorio/sentencia/etc inline
+  fix_frontend: bloque-documentos-sin-anclar # DatosProceso renderiza un bloque "Documentos del proceso" con los docs de etapas no anclados a ningún campo (cubre tutela; DdP = conjunto vacío → sin cambios)
+  docs_contextuales: opcionalesSi # auto_admisorio(admitida=SI), sentencia(falloPrimera set); demanda.pdf sigue obligatorio en radicacion
+  docs_solo_del_doc: true # 2026-06-17 el usuario: "no agregues más documentos de los que dice el doc" → QUITADOS impugnacion.pdf y sentencia_segunda.pdf (el doc en Impugnación/2ª instancia solo pide fecha/decisión, no PDF). Docs finales = demanda/pruebas/anexos/auto_admisorio/sentencia/escrito_desacato/fallo_desacato
+  campo_nuevo: fechaImpugnacion # fecha, soloFicha, mostrarSi impugnada=SI
+  sin_schema: true # solo seed-tipos.json crudo + frontend; el Zod strippea opcionalesSi/soloFicha
+  no_toca_ddp: true # el bloque sin-anclar es vacío para DdP (sus docs van anclados a requierePoder/contestaron)
+phases:
+  explore: done # ficha compartida procesos/[id] (stepper + DatosProceso); slots de doc anclados a campos DdP que la tutela no tiene; DocumentosProceso lateral solo URL/plantilla; seed guarda JSON crudo (Zod strippea); flujo real Decreto 2591/1991
+  propose: done
+  spec: delta # specs/tramite-catalog: ficha muestra adjuntos con nombre para tipos sin anclas + docs de seguimiento contextuales + fechaImpugnacion
+  design: inline # proposal.md (tabla flujo real ↔ doc ↔ campos/docs)
+  tasks: inline
+  apply: done # datos-proceso.tsx (bloque docs sin-anclar) + seed-tipos.json (fechaImpugnacion + 4 etapas opcionalesSi)
+  verify: green # JSON válido + seed-tipos.test 4/4 + re-seed (38 tipos) + build client verde. Smoke manual de la ficha de tutela pendiente (lo hace el usuario)
+  archive: pending
+capabilities:
+  modified:
+    - tramite-catalog # flujo de seguimiento de la tutela (ficha) + adjuntos contextuales
+applies_to:
+  - TipoProceso "Acción de tutela"
+  - components/datos-proceso.tsx (ficha de cualquier proceso sin anclas DdP)
+follow_ups:
+  - Ocultar del seguimiento los campos sustantivos (hechos/pretensión/…) si el usuario lo pide (hoy soloFicha para DEMANDA_TUTELA)
+  - Incidente de desacato como etapa propia del stepper (hoy campos + adjuntos)
+next: re-seed catálogo, correr seed-tipos.test, build client, smoke manual de la ficha de tutela.
+notes: |
+  Complementa [[tutela-creacion-simple]]: creación = subir Demanda/Pruebas/Anexos; seguimiento
+  = los pasos en la ficha (como peticiones). El hueco real era que la ficha no tenía dónde
+  subir los PDF con nombre de la tutela. Rama feat/cuenta-clientes (2026-06-17).

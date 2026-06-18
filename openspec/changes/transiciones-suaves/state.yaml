@@ -1,0 +1,41 @@
+change: transiciones-suaves
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "para implementar transiciones suaves, qué tan costoso sería; dame recomendaciones; ¿qué es lo más profesional?; ¿tendríamos A y B?; para no migrar de A a B mejor arrancar con B; usa SDD"
+  pregunta_clave: que-es-lo-mas-profesional # B2B legal → sutil/rápido/consistente, NO "lo que más se mueve"
+  estandar_profesional: ~200ms + opacity/transform (60fps GPU) + mismo easing + prefers-reduced-motion # como Linear/Stripe/Vercel/Clio
+  hueco_real: navegacion-entre-paginas-corte-seco # hover/focus ya tiene transition-*; landing ya animada; falta la transición DE RUTA en el dashboard
+  opcion_elegida: B-view-transitions # nativo, 0 deps, 0 kb; su default YA es el cross-fade de A
+  porque_no_A_sola: A-vive-como-fallback # se arranca por B para no migrar A→B; A no se desperdicia (fallback @supports)
+  porque_no_C: framer-motion-sobreingenieria # +35kb bundle para navegación de dashboard; descartado
+  stack_ok: next-16.2.7 + react-19.2.4 # soporta experimental.viewTransition + componente ViewTransition (experimental)
+  shared_element_demo: titulo-fila→PageHeader-ficha # OJO la lista de procesos es TABLA (<tr>), no cards → showcase = morph del TÍTULO (no card→ficha, se veía forzado)
+  predeterminado_futuras_vistas: heredado-por-template # template.tsx envuelve TODO (dashboard) → cualquier página nueva hereda el cross-fade sin tocar nada
+  helper_reusable: vtName(scope,id) # src/lib/ de cada portal → style {viewTransitionName} sanitizado; lista→detalle futura aplica en 1 línea (fila + contenedor ficha)
+  convencion_claudemd: true # nota en CLAUDE.md (sección Frontends) para que futuras sesiones lo sigan por defecto
+  ambos_portales: true # client + admin (estructura espejada)
+  sin_schema: true # solo frontend (next.config + template.tsx + globals.css + lib/vtName + CLAUDE.md)
+phases:
+  explore: done # VERIFICADO contra código: next.config.ts vacío en ambos; NO existe template.tsx en ningún portal; layout.tsx renderiza {children} dentro de <main overflow-y-auto p-4 sm:p-6> (template envuelve solo el contenido → sidebar/topbar fijos); globals.css en ambos con keyframes+prefers-reduced-motion; lista de procesos del client es TABLA (<tr key=t.id>) NO cards; sin libs animación; Next 16.2.7/React 19.2.4
+  propose: done
+  spec: delta # nueva capability ui-transitions (presentacional, ambos portales)
+  design: inline # proposal.md (tabla A/B/C + rationale "lo profesional")
+  tasks: inline
+  apply: done # (1) ADMIN route-transition DONE: next.config flag + src/react-canary.d.ts (activa tipos canary, ViewTransition NO está en index.d.ts estable) + (dashboard)/template.tsx (<ViewTransition><div.lex-page>) + lib/view-transition.ts (vtName→string) + globals.css (tokens + ::view-transition-old/new(*) + @supports fallback + reduced-motion) + CLAUDE.md convención. (2) CLIENT aparición-campos-condicionales DONE: globals.css keyframe lex-campo-in + .lex-campo-reveal (+reduced-motion) + formulario-dinamico.tsx aplica clase solo si campo.mostrarSi (cubre creación Y ficha; datos-proceso reusa FormularioDinamico). (3) CLIENT route-transition DONE (mismo patrón admin: next.config + react-canary.d.ts + template.tsx + lib/view-transition.ts + globals.css). (4) SHOWCASE morph título DONE: PageHeader gana prop opcional titleStyle (CSSProperties→<h2>); ficha procesos/[id] pasa titleStyle viewTransitionName=vtName("proceso-titulo",id); fila de la lista procesos/page.tsx el <div> del título lleva el mismo style. Inline viewTransitionName (no componente <ViewTransition name>) — más simple, ids únicos sin colisión.
+  verify: builds-verdes # admin next build verde + client next build verde (ambos ✓ viewTransition, tsc OK). PENDIENTE smoke MANUAL en dev (no verificable sin navegador): crossfade de ruta, morph del título lista→ficha (¿se ve bien con ~10 filas nombradas?), fade de campos condicionales, reduced-motion. Lo ve el usuario.
+  archive: pending
+capabilities:
+  added:
+    - ui-transitions # transición de ruta del dashboard + tokens + fallback + elemento compartido
+applies_to:
+  - lex-control-client (next.config.ts, app/(dashboard)/template.tsx, globals.css, ficha+lista procesos)
+  - lex-control-admin (next.config.ts, app/(dashboard)/template.tsx, globals.css)
+follow_ups:
+  - Extender view-transition-name a más vistas (lista→detalle de clientes, contable, etc.) según cómo se vea la demo
+  - Reevaluar framer-motion solo si aparece necesidad real de animaciones de componentes complejas (drag/stagger/gestos)
+next: confirmar con el usuario y aplicar (apply pending). Verify = ambos builds + smoke navegación.
+notes: |
+  "Lo más profesional" para B2B legal = sutil, no llamativo. Se elige View Transitions (B)
+  por ser nativo y porque su default ya es el cross-fade de A → A queda solo como fallback,
+  sin migración. framer-motion (C) descartado por peso. Rama feat/cuenta-clientes (2026-06-18).

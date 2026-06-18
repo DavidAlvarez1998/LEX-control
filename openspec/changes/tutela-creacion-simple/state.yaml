@@ -1,0 +1,37 @@
+change: tutela-creacion-simple
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "el form de tutela se ve simple en el doc; rol de demandante ni está; al elegir cliente, subir Demanda/Pruebas/Anexos"
+  fuente_verdad: doc-derecho-peticion-juan-david # sección final "ACCIÓN DE TUTELA": cliente → Demanda/Pruebas/Anexos PDF → tracking; sin rol/cuantía/contraparte
+  alcance: solo-creacion-frontend # procesos/nuevo/page.tsx; NO toca catálogo/schema/backend (el catálogo ya modela demanda req + pruebas/anexos opcionales + tracking soloFicha)
+  tutela_ofensiva: "grupo===CONSTITUCIONAL && !clienteOpcional" # gate; deja fuera la recibida (defensiva, clienteOpcional)
+  rol_cliente: ACCIONANTE # fijo; se quita el select de rol procesal
+  oculta_en_creacion: [rol-procesal, datos-judiciales, contraparte] # cuantía/radicado-23díg/juzgado/litigantes-con-rol no aplican a la tutela
+  adjuntos_al_crear: requeridos+opcionales # antes solo subía requeridos → pruebas/anexos se perdían
+  co_accionantes: true # 2026-06-17 litisconsorcio activo: sección "Otros accionantes" (reusa el componente de co-peticionarios del DdP) → partes rol ACCIONANTE; el cliente es el accionante principal
+  sin_schema: true
+  no_toca_recibida: true # "Acción de Tutela (Recibida)" intacta (fuera de alcance, igual que en tutela-form-hibrida)
+phases:
+  explore: done # doc (sección ACCIÓN DE TUTELA), seed-tipos.json (demanda req + pruebas/anexos opcionales + 9 tracking soloFicha), nuevo/page.tsx (rol/datos-judiciales/contraparte gated en esJudicial; bucle subida solo requeridos)
+  propose: done
+  spec: delta # specs/tramite-catalog: creación de tutela sin rol/cuantía/contraparte + adjuntos (demanda/pruebas/anexos) tras el cliente
+  design: inline # decisiones en proposal.md (cambio acotado al form)
+  tasks: inline
+  apply: done # procesos/nuevo/page.tsx: const esTutelaOfensiva; oculta rol/datos-judiciales/contraparte; rolCliente=ACCIONANTE; bucle de subida incluye opcionales (pruebas/anexos). La tutela entra por /acciones-constitucionales/nueva, que reexporta este mismo form.
+  verify: build-green # pnpm build del client verde (todas las rutas incl. /procesos/nuevo y /acciones-constitucionales/nueva). Smoke manual del form pendiente (lo hace el usuario)
+  archive: pending
+capabilities:
+  modified:
+    - tramite-catalog # forma del formulario de creación de la tutela ofensiva
+applies_to:
+  - TipoProceso "Acción de tutela" (CONSTITUCIONAL, !clienteOpcional)
+  - procesos/nuevo (portal cliente)
+follow_ups:
+  - "Acción de Tutela (Recibida)" (defensiva): simplificar aparte si se desea
+next: Aplicar en procesos/nuevo/page.tsx; build client verde; smoke manual del form.
+notes: |
+  Extiende [[tutela-form-hibrida]]: aquél acortó el CONTENIDO (soloFicha); éste acorta la
+  FORMA del form de creación (quita rol/datos-judiciales/contraparte y sube los adjuntos
+  opcionales). Fuente de verdad: doc Juan David. Sin tocar catálogo/schema/backend.
+  Rama feat/cuenta-clientes (2026-06-17).
