@@ -153,3 +153,82 @@ Sección fuente: bloque autónomo "ACCIÓN DE TUTELA" (fuente-juan-david.txt lí
 5. **`impugnada`/`falloSegunda`/`incidenteDesacato` no ramifican etapas**: el doc presenta la tutela como bifurcaciones (SI/NO) que abren más campos; el seed sólo gatea **una** etapa condicional (`impugnacion` por `impugnada==SI`) y resuelve el resto con `mostrarSi`/`opcionalesSi`. Los demás "SI/NO" no crean ramas de etapa. Es decisión de diseño (ficha-céntrica), no hueco de datos, pero el flujo de etapas es más lineal que el árbol del doc.
 6. **Sin etapa/terminal de "fallo desfavorable en firme" ni de "cumplimiento"**: el doc no lo pide y el seed no lo modela; el único terminal es `terminado`. Sin hueco respecto al doc; anotado por completitud.
 7. **Documentos siempre OPCIONALES salvo `demanda.pdf`**: auto admisorio, sentencia, escrito/fallo de desacato son opcionales (no bloquean avance). El doc los lista como entregables sin marcarlos obligatorios → coincide; sin hueco.
+
+---
+
+## PENDIENTE — Gating por etapa (hacer la tutela "gated" como el laboral)
+
+> **Estado:** NO aplicado. La API (`lex-control-api`) está en reestructuración → **no tocar el
+> seed ahora**. Esto queda escrito para aplicarlo cuando la API esté lista.
+>
+> **Problema:** hoy en la ficha de tutela se puede **avanzar de etapa sin llenar nada** porque
+> las etapas casi no declaran `camposRequeridos`/`documentosRequeridos` (todo es `soloFicha`
+> opcional). El motor de gateo es el mismo del laboral; solo falta que cada etapa **declare lo
+> que exige** para que el avance vaya pidiendo el formulario a medida que la tutela avanza.
+>
+> **Cómo aplicar:** editar `prisma/seed-tipos.json` → tipo "Acción de tutela" → `etapas[].reglas`
+> con lo de abajo, y re-seedear (`pnpm seed:catalogo`). Solo datos, sin tocar lógica del motor.
+
+### Qué exigiría cada etapa
+
+| Etapa (key) | `camposRequeridos` | `documentosRequeridos` | Condicional (`requeridosSi`) |
+|---|---|---|---|
+| `radicacion` | `entidadAccionada`, `fechaPresentacion` | `demanda.pdf` | — |
+| `admision` | `admitida`, `radicadoTutela` | — | si `admitida=SI` → campo `fechaAutoAdmisorio` + doc `auto_admisorio.pdf` |
+| `falloPrimeraInstancia` | `falloPrimera`, `fechaFallo` | `sentencia.pdf` | — |
+| `impugnacion` *(ya gated por `impugnada=SI`)* | `fechaImpugnacion` | — | — |
+| `falloSegundaInstancia` | `falloSegunda` | — | si `incidenteDesacato=SI` → campo `fechaIncidenteDesacato` + docs `escrito_desacato.pdf`, `fallo_desacato.pdf` |
+| `remisionRevision` | *(ver nota: requiere campo nuevo `fechaRemision`)* | — | — |
+| `terminado` | — (terminal) | — | — |
+
+### Snippets de `reglas` listos para pegar
+
+```jsonc
+// radicacion
+"reglas": {
+  "camposRequeridos": ["entidadAccionada", "fechaPresentacion"],
+  "documentosRequeridos": ["demanda.pdf"],
+  "documentosOpcionales": ["pruebas.pdf", "anexos.pdf"],
+  "plazoDesdeCampo": "fechaPresentacion", "plazoTipoDias": "habiles", "plazoDias": 10
+}
+// admision
+"reglas": {
+  "camposRequeridos": ["admitida", "radicadoTutela"],
+  "requeridosSi": [
+    { "si": { "campo": "admitida", "igualA": "SI" },
+      "camposRequeridos": ["fechaAutoAdmisorio"], "documentosRequeridos": ["auto_admisorio.pdf"] }
+  ]
+}
+// falloPrimeraInstancia
+"reglas": {
+  "camposRequeridos": ["falloPrimera", "fechaFallo"],
+  "documentosRequeridos": ["sentencia.pdf"],
+  "plazoDias": 10, "plazoTipoDias": "habiles"   // ← fijar tipo de día (hoy falta)
+}
+// impugnacion  (sigue con disponibleSi: impugnada == SI)
+"reglas": { "camposRequeridos": ["fechaImpugnacion"], "plazoDias": 3, "plazoTipoDias": "habiles" }
+// falloSegundaInstancia
+"reglas": {
+  "camposRequeridos": ["falloSegunda"],
+  "requeridosSi": [
+    { "si": { "campo": "incidenteDesacato", "igualA": "SI" },
+      "camposRequeridos": ["fechaIncidenteDesacato"],
+      "documentosRequeridos": ["escrito_desacato.pdf", "fallo_desacato.pdf"] }
+  ],
+  "plazoDias": 20, "plazoTipoDias": "habiles"   // ← fijar tipo de día
+}
+// remisionRevision  (plazoDias 10 → fijar plazoTipoDias)
+"reglas": { "plazoDias": 10, "plazoTipoDias": "habiles" }
+```
+
+### Notas al aplicar
+- **`remisionRevision`** no tiene un campo de fecha hoy. Si se quiere exigir algo, agregar un
+  campo `fechaRemision` (fecha, `soloFicha`) al `esquemaFormulario` y ponerlo en
+  `camposRequeridos`. Si no, dejar la etapa sin requisitos (solo el plazo).
+- **Plazos sin `plazoTipoDias`** (fallo 1ª/2ª, remisión): aprovechar para fijarlos. Donde el doc
+  calle, **preguntar** hábiles vs. calendario antes de asumir (ver [[plazos-dias-habiles-creele-al-doc]]).
+- **Refinamientos relacionados (aparte de este gating, opcionales):** rama de **rechazo/
+  improcedencia** cuando `admitida=NO`; **terminales diferenciados** (amparada/negada); fase de
+  **cumplimiento del fallo**; reubicar **desacato** como incidente propio. Ver `comparacion.md`.
+- Tras editar el seed: `pnpm seed:catalogo` (upsert + `esquemaVersion++`) y verificar que un
+  proceso de tutela ya creado siga abriendo (campos nuevos opcionales no rompen).
