@@ -180,3 +180,31 @@ posesorios · propiedad horizontal · alimentos (los que correspondan) · otros 
   salvo que se confirme lo contrario.
 - **Reutilización**: el verbal es prácticamente el laboral civil (mismas etapas/ramas/2ª
   instancia); el sumario es el "única instancia" sin reconvención ni apelación.
+
+## Comportamiento heredado del motor (aplica a los dos) — NO se reimplementa
+
+Estos dos tipos usan el **mismo motor** que el laboral/DdP/tutela (`esquema.ts` +
+`procesos.router.ts`). Por eso, con solo declarar bien las `reglas` por etapa, heredan:
+
+1. **Avance automático conforme se llenan los campos** (`autoavanzarEtapas` →
+   `siguienteEtapaAuto`): al **guardar** datos, si la siguiente etapa tiene sus
+   `camposRequeridos` + `documentosRequeridos` completos y la rama no es ambigua, el proceso
+   **avanza solo**. Por eso CADA etapa de estos diseños declara qué exige (a diferencia del
+   esqueleto de la tutela, donde se avanzaba sin pedir nada).
+2. **Bloqueo y guía al avanzar manual** (clic en el stepper): si faltan datos/documentos, NO
+   avanza, abre el formulario y **resalta lo que falta**.
+3. **Guardar lo diligenciado antes de avanzar** (`flush`): si hay cambios sin guardar y se
+   hace clic en una etapa, primero se guardan y se reevalúa el avance.
+4. **Salto a terminal decidido** (`terminalDecidido`): si los datos ya implican un cierre
+   (retiro art. 93 = SÍ, rechazo definitivo, conciliación = SÍ), el proceso **se cierra solo**
+   al guardar, aunque falte papeleo intermedio. El botón muestra "Guardar y archivar/finalizar".
+5. **Ramas por opción** (`disponibleSi` `{todas}`/`{alguna}`) y **campos condicionales**
+   (`mostrarSi`): las opciones que abren otro camino aparecen con su animación (`.lex-campo-reveal`).
+6. **Plazos / vencimientos** derivados (`plazoDesdeCampo` + `plazoTipoDias`): el vencimiento se
+   calcula y se muestra en la ficha (semáforo) — por eso fijamos `plazoTipoDias`.
+7. **Stepper agrupado por fase** (genérico para judiciales) + **documentos en tarjeta** con el
+   nombre del archivo subido.
+
+→ En resumen: para que estos verbales "avancen solos conforme se llena el form" **no hay que
+programar nada nuevo**; basta poblar `camposRequeridos`/`documentosRequeridos`/`disponibleSi`/
+plazos en el seed (que es justo lo que detallan las tablas de etapas de arriba).
