@@ -1,0 +1,38 @@
+change: api-production-grade
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-requested # "qué falta para la API perfecta" → "hagamos todo, usa sdd" (2026-06-18)
+  shape: umbrella # 4 tracks by leverage; one verification gate + checkpoint each
+  no_breaking: si # tracks 1-2 freeze the HTTP contract; track 3 is first to coordinate with front
+  migrations: baseline # adopt existing shared DB via migrate diff + resolve --applied (no data touched)
+  migrate_dev: forbidden-on-shared-db # resets/data loss; use migrate diff offline + migrate:deploy
+  typesafety: compile-time-only # as never → Prisma.*Input does NOT change runtime → mocks intact
+  prisma_input: unchecked-variants # repos pass scalar FKs → Unchecked(Create|Update)Input
+phases:
+  explore: done
+  propose: done
+  spec: delta # specs/api-architecture (+3 requirements: typed data layer, versioned migrations, CI gate)
+  design: done
+  tasks: done
+  apply: partial # Track 1 done, Track 2 done; Tracks 3-4 pending
+  verify: green # build exit 0 + 442/442 tests after every batch
+  archive: pending # when all 4 tracks done
+capabilities:
+  modified:
+    - api-architecture
+tracks:
+  track1_migraciones_ci: done # commits api 510ae2b, client 589a2ae, admin 8cebf54, super 2c8affb
+  track2_typesafety: done # commits api c00a38b + b0283bc, super f201027; 95 repo + 8 service casts
+  track3_pagination_openapi: pending # touches frontend
+  track4_integrity_observability: pending
+notes: |
+  Umbrella record of the "API production-grade" program. Track 1 (migrations baseline + CI) and
+  Track 2 (type-safe data layer: 95 repo casts + 8 service casts → Prisma.*Input) are APPLIED and
+  VERIFIED (build + 442 tests), committed locally, NOT pushed. Detail of Track 1 lives in change
+  ops-migraciones-ci. Key insight: the as-never→Prisma.*Input migration is compile-time-only, so
+  the method-name-coupled test mocks were NOT a blocker (they only block method changes, deferred
+  to Track 4 / api-hardening). 3 hard casts intentionally left (money helper + 2 DTO-boundary).
+next: |
+  PUSH (4 repos). Then Track 3 (pagination envelope + OpenAPI from Zod, coordinate with the two
+  frontends) and Track 4 (tx boundaries + idempotency + modernize mocks + observability).

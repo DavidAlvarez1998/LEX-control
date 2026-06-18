@@ -6,7 +6,7 @@
 - [x] `migrate resolve --applied 0_init` → marca baseline aplicado SIN ejecutar SQL ni tocar datos
 - [x] `migrate status` = "Database schema is up to date!"
 - [x] `MIGRATIONS.md` con el flujo seguro (NUNCA `migrate dev` contra DB compartida; diff offline + deploy)
-- [ ] Smoke: `pnpm generate` + `pnpm build` siguen verdes; suite 442 verde
+- [x] Smoke: `pnpm generate` + `pnpm build` verdes (exit 0); suite **442/442** verde
 
 ## CI — GitHub Actions
 - [x] `lex-control-api/.github/workflows/ci.yml`: build (generate+tsc) + test (MySQL service + db push + seed + vitest)
@@ -14,5 +14,5 @@
 - [x] `lex-control-admin/.github/workflows/ci.yml`: build + lint
 
 ## Cierre
-- [ ] Commit por repo (api + client + admin) + bump superrepo + commit del change
+- [x] Commit por repo (api 510ae2b · client 589a2ae · admin 8cebf54) + bump superrepo 2c8affb
 - [ ] (CI real corre en GitHub al hacer push — la primera corrida puede requerir tuning de seeds)
