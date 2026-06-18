@@ -1,0 +1,36 @@
+change: api-arquitectura-refactor
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-requested # "refactorizar la api, arquitectura profesional, sin romper nada"
+  approach: strangler # incremental, módulo a módulo, contrato HTTP congelado
+  layers: router-service-repository-dto # + domain/ puro (procesos) + shared/
+  prisma: singleton # se inyecta TenantContext, no instancias; tx via repo(tx)
+  middleware: solo-en-router # services transport-agnostic
+  no_breaking: si # 424→434 tests verdes en cada paso; frontends intactos
+phases:
+  explore: done
+  propose: done
+  spec: delta # specs/api-architecture (7 requirements)
+  design: done
+  tasks: done # Fases 0-4 + 4 routers extra (auth/contratos/integraciones/publico)
+  apply: done # 18/18 routers migrados, 0 prisma. en routers
+  verify: green # tsc + vitest 434/434 + build + smokes (partes 12/12, peticiones 10/10); motor puro 10/10
+  archive: done # 2026-06-18 (spec api-architecture fusionada a openspec/specs/)
+capabilities:
+  added:
+    - api-architecture
+notes: |
+  Refactor de TODO el API a arquitectura en capas. 18/18 routers finos (0 prisma.),
+  18 repositories (empresaId/scope forzado), 22 services, 14 dtos, motor de procesos
+  PURO (maquina-etapas.ts, 10 unit tests sin DB), shared/{prisma,tenant,errors,
+  pagination,logger} + mapPrismaError central + requestId. Router de procesos
+  1355→83 líneas. Commits api: 9e262dc→f7104a3 (cimientos→clientes→fase2→fase3→
+  procesos→4 routers extra→tests motor). Mensajes de error específicos preservados.
+next: |
+  CARVE-OUTS (futuro, no bloquean): (5) rollout de paginación a los listados pesados
+  (clientes/contable) — requiere coordinar el front (hoy solo procesos pagina;
+  shared/pagination disponible y back-compatible). (6) OpenAPI generado desde Zod +
+  tipos compartidos con los frontends para que no re-declaren el contrato.
+  La limpieza de handlers Prisma ad-hoc se evaluó: la mayoría usan mensajes ESPECÍFICOS
+  (tested) → se conservan; mapPrismaError solo cubre los no-manejados.
