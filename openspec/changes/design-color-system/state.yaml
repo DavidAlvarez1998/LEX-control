@@ -1,0 +1,37 @@
+change: design-color-system
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "usa SDD para validar los temas/relación de colores; qué mejorar para verse más profesional y amigable psicológicamente"
+  diagnostico: sin-tokens-todo-tailwind-crudo # ~11 grises slate sin roles; acento indigo OK; semánticos emerald/red/amber/rose; cliente↔admin divergen
+  recomendacion_raiz: tokens-semanticos-theme-aware # CSS vars (claro + html.dark) + @theme inline → bg-surface/text-muted/border-default; 5 roles
+  psicologia: indigo=confianza/calma(legal) + slate=profesional(frio→suavizar con superficies/espacio/redondeo/bajo-contraste, NO negro/blanco puros)
+  hallazgos_alta: [estadobadge-cerrado-sin-dark, card-cliente!=admin, topbar-border-800-vs-700]
+  hallazgos_media: [indigo-dark-variants-/10-vs-/950-40, red-100-vs-red-50, ghost-border-700-vs-600, descartado-gris-no-comunica]
+  hallazgos_baja: [slate-400-sobre-slate-100-3.5:1-WCAG, spans-sin-dark-text-explicito]
+  semanticos: un-helper-central # estadoTono() (ya hay bits.tsx en contable) reusado; rose=dinero-negativo ≠ red=peligro
+  warm_neutral: opcional-a-decidir # explorar grises un punto más cálidos vs mantener slate puro
+phases:
+  explore: done # 2 Explore agents: inventario completo (acento indigo, neutrales slate, semánticos, sin tokens, landing gradiente indigo#4f46e5→violet#7c3aed) + inconsistencias archivo:línea + compare cliente vs admin (Card difiere)
+  propose: done
+  spec: added # capability design-color-system: tokens theme-aware + jerarquía profundidad + 1 acento + semánticos consistentes/suaves + contraste AA + calidez
+  design: inline # proposal.md (diagnóstico + hallazgos por severidad + recomendaciones con tabla de tokens + psicología)
+  tasks: inline
+  apply: pending # NADA aplicado aún (es validación/doc). Implementación por fases: (1) tokens en globals.css + migrar componentes compartidos; (2) arreglar hallazgos puntuales; (3) helper estadoTono central; (4) opcional neutral cálido
+  verify: pending
+  archive: pending
+capabilities:
+  added:
+    - design-color-system
+applies_to:
+  - lex-control-client (globals.css, components/ui.tsx, form-ui.tsx, layout.tsx, topbar.tsx, sidebar.tsx, badges por pantalla)
+  - lex-control-admin (misma paleta/tokens → unificar)
+follow_ups:
+  - Tipografía/espaciado/iconografía (otro change)
+  - Migración completa de clases crudas slate-*/indigo-* → utilidades token (barrido grande)
+next: confirmar con el usuario alcance (solo arreglos puntuales vs tokens completos; ¿neutral más cálido?). Luego aplicar por fases.
+notes: |
+  El re-theming reciente ya dejó: fondo claro slate-100 + tarjetas blancas + "No actualizado"
+  slate-100; oscuro contenido slate-950 + chrome slate-900 + tarjetas slate-800. Falta
+  TOKENIZARLO y unificar cliente↔admin + arreglar los 9 hallazgos. Pendiente smoke visual del
+  usuario. Rama feat/cuenta-clientes.

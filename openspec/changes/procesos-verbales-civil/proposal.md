@@ -22,9 +22,9 @@ fases, plazos hábiles, documentos anclados, terminales diferenciados).
 
 **Esto es solo el PLAN** (proposal + design + tasks). **No se implementa nada** todavía (la API
 está en reestructuración). Cuando se aplique, será reescribir las dos entradas del seed
-(`Proceso declarativo verbal` y `Proceso verbal sumario`) con:
+(`Proceso verbal` y `Proceso verbal sumario`) con:
 
-### 1. Proceso (declarativo) verbal — CGP 368–373
+### 1. Proceso verbal — CGP 368–373
 - **Doble instancia** (apelable), **2 audiencias** (inicial art. 372 + instrucción y
   juzgamiento art. 373).
 - Ramifica por **rol** (Demandante/Demandado) y por decisiones (calificación, contestación con

@@ -2,7 +2,7 @@
 
 > Estado: **APLICADO + VERIFICADO** (2026-06-18). Seed reescrito (verbal 51 campos/18 etapas; sumario 25/11), grupo=JUDICIAL + esJudicial=true. 442 tests API (8 nuevos: tests/verbales-flujos.test.ts) + re-seed (40 tipos) + build cliente verde. SIN commit. Alcance: tal como dicta el CGP.
 
-## 1. Seed — `Proceso declarativo verbal` (reescribir entrada)
+## 1. Seed — `Proceso verbal` (reescribir entrada)
 - [x] `esquemaFormulario`: campos intake + `soloFicha` (ver `design.md` §A)
 - [x] `etapas`: presentacion→calificacion→[subsanacion|recurso_rechazo|archivado_rechazo]→retiro→[archivado|traslado]→contestacion→audienciaInicial→[audienciaInstruccion|terminada_conciliacion]→recurso→[2ª instancia]→terminada
 - [x] `disponibleSi` compuestos (rol×decisiones); `mostrarSi` en campos de ficha
