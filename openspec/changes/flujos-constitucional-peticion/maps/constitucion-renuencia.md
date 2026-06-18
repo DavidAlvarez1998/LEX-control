@@ -2,7 +2,7 @@
 
 Reclamo previo dirigido a la autoridad o particular para **constituir la renuencia**, requisito de procedibilidad de la **acción de cumplimiento** (art. 8 Ley 393/1997). Representamos al peticionario/cliente que exige el cumplimiento de un deber legal: si transcurridos los días de plazo no se atiende o se reitera el incumplimiento, la renuencia queda constituida y habilita escalar a tutela. No es judicial (`esJudicial: false`); grupo **PETICION**, jurisdicción **CONSTITUCIONAL**.
 
-> Fuente de verdad = el seed (`prisma/seed-tipos.json`). No hay doc fuente específico; este mapa describe el flujo legal tal como está implementado.
+> Fuente de verdad = el doc "DERECHO DE PETICIÓN - JUAN DAVID" (sección CONSTITUCIÓN DE RENUENCIA LEY 393) + el seed (`prisma/seed-tipos.json`). El doc fija dos puntos antes marcados como huecos: **plazo 15 días hábiles** ("General – (15 días hábiles)") y **escalamiento → Acción de Tutela** ("ACCIÓN DE TUTELA / Acción de tutela - Cargar PDF"). Ambos son INTENCIONALES (confirmado con el usuario 2026-06-18): aunque jurídicamente la renuencia precede a la acción de cumplimiento (art. 8) y el art. 8 cita 10 días, **el doc manda** → tutela + 15 hábiles.
 
 ## Fases de este caso
 
@@ -94,7 +94,8 @@ Campos visibles al crear / editar la ficha (no son etapa; alimentan los gates):
 3. **Contestación favorable (SI)** — se registra `respuesta.pdf` opcional; no se ofrece el escalamiento; el caso puede ir a Terminación.
 
 ## Notas
-- **Plazo 15 vs 10 días:** la descripción legal del seed cita el art. 8 Ley 393/1997 ("transcurridos **10 días**"), pero la etapa Radicación está parametrizada con **`plazoDias: 15` (hábiles)**. Posible inconsistencia entre el texto legal de referencia y el plazo implementado. Marcado como hueco — no se altera en el mapa principal (el mapa refleja lo implementado: 15 hábiles).
+- **Plazo 15 vs 10 días — RESUELTO:** el art. 8 Ley 393/1997 cita "transcurridos **10 días**", pero el **doc fuente Juan David dice "General – (15 días hábiles)"** y el seed implementa **`plazoDias: 15` (hábiles)**. NO es inconsistencia: créele al doc → 15 hábiles es lo correcto (confirmado con el usuario 2026-06-18).
+- **Escalamiento → Tutela (no Cumplimiento) — RESUELTO:** jurídicamente la renuencia es requisito de la acción de cumplimiento, pero el **doc fuente modela explícitamente el escalamiento a Acción de Tutela** ("ACCIÓN DE TUTELA / Acción de tutela - Cargar PDF"). El seed (`escala_tutela` → "Acción de tutela") es fiel al doc. Mantener (confirmado con el usuario 2026-06-18).
 - **`fechaRadicado` vs `fechaRadicacion`:** son dos campos distintos. `fechaRadicado` (fecha de radicación de **la solicitud**) es solo referencia; el plazo corre desde `fechaRadicacion` (fecha de radicación **del proceso**, soloFicha). Convención frágil por nombres casi idénticos.
 - **`escala_tutela` no es terminal y no exige `poder.pdf`:** `copiarDocumentos=[poder.pdf]` se copia al derivado solo si existe; si en Radicación `requierePoder=false`, no habrá `poder.pdf` que copiar (la copia simplemente no aporta ese documento). No es un error, pero la copia es condicional al estado previo.
 - **No hay rama explícita de "no escalar / archivo sin tutela":** con `contestaron=NO/PARCIAL` el flujo ofrece Escalar (3) y Terminación (4); no existe una etapa de archivo distinta. El cierre siempre es Terminación con resultado "Renuencia constituida.", aunque la respuesta haya sido SI (cumplimiento) — el seed no diferencia el resultado de cierre por `contestaron`. Hueco menor: un cumplimiento total (SI) termina con el mismo literal "Renuencia constituida.", que semánticamente no aplicaría.
