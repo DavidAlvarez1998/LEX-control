@@ -31,7 +31,7 @@ FASE 1 ─ DEMANDA Y ADMISIÓN
                                       ◇ ADMITIR → ④   ◇ RECHAZAR → ②b
                     = RECHAZO ─────────► ②b RECURSO (reposición/apelación, ⏱3)
                                           FAVORABLE → ④ · DESFAVORABLE/NO → ARCHIVO ✦
- ④ ¿RETIRO? (art. 93)  SÍ → ARCHIVO ✦ · NO → sigue
+ ④ ¿RETIRO DE LA DEMANDA?  SÍ → ARCHIVO ✦ · NO → sigue
 
 FASE 2 ─ TRASLADO Y CONTESTACIÓN
  ⑤ NOTIFICACIÓN + TRASLADO  fechaNotificacion + 📎 notificacion.pdf · ⏱ 20 días háb.
@@ -115,8 +115,7 @@ FASE 6 ─ TERMINACIÓN ✔   (✦ = desenlace de archivo/conciliación)
 | 1 · Demanda y admisión | `presentacion` · `calificacion` · `subsanacion` · `archivado_rechazo` · `retiro` · `archivado` | Demanda (puede ser en formato) y calificación. |
 | 2 · Traslado y contestación | `traslado` · `contestacion` | Notificación + 10 días háb.; contestación (limitada). |
 | 3 · Audiencia única (art. 392) | `audienciaUnica` · `terminada_conciliacion` | Conciliación, excepciones, pruebas, alegatos, sentencia — todo concentrado. |
-| 4 · Recurso | `recurso` | Reposición (no hay apelación). |
-| 5 · Terminación / archivo | `terminada` · terminales de archivo | Cierre. |
+| 4 · Terminación / archivo | `terminada` · terminales de archivo | Cierre. La sentencia de **única instancia** queda EN FIRME (no hay apelación NI reposición contra ella — CGP art. 318). |
 
 ## Grafo
 ```
@@ -130,17 +129,16 @@ FASE 1 ─ DEMANDA Y ADMISIÓN
 FASE 2 ─ TRASLADO Y CONTESTACIÓN
  ③ NOTIFICACIÓN + TRASLADO  fechaNotificacion + 📎 notificacion.pdf · ⏱ 10 días háb.
  ④ CONTESTACIÓN  ¿contestaron? SÍ→📎contestacion.pdf · NO→📎auto-silencio.pdf
-     (SIN reconvención · SIN excepciones previas separadas · SIN terceros)
+     (art. 392: SIN reforma, reconvención, excepciones previas, incidentes, acumulación,
+      suspensión de común acuerdo ni intervención de terceros)
 
 FASE 3 ─ AUDIENCIA ÚNICA (art. 392)
  ⑤ ¿se concilia? SÍ → 📎acta+acuerdo → TERMINA ✦ · NO → sigue
    · interrogatorios · excepciones (se resuelven aquí) · pruebas · alegatos
    · fechaSentencia + 📎 sentencia.pdf · ◇ FAVORABLE/DESFAVORABLE
+   ⤷ SENTENCIA EN FIRME — única instancia: NO procede apelación NI reposición contra el fallo
 
-FASE 4 ─ RECURSO
- ⑥ REPOSICIÓN (hayRecurso; NO apelación — única instancia)
-
-FASE 5 ─ TERMINACIÓN ✔
+FASE 4 ─ TERMINACIÓN ✔
 ```
 
 ## Campos a usar (`esquemaFormulario`)
@@ -152,8 +150,8 @@ posesorios · propiedad horizontal · alimentos (los que correspondan) · otros 
 **Ficha (`soloFicha`):** `decisionAuto`, `fechaAuto`, `decisionTrasSubsanacion`,
 `fechaSubsanacion`, `fechaAdmisionTrasSubsanacion`, `hayRetiro`, `fechaNotificacion`,
 `contestaron`, `fechaContestacion`, `conciliaResultado`, `acuerdoConciliacion`, `excepciones`,
-`practicaPruebas`, `alegatos`, `fechaSentencia`, `decisionSentencia`, `hayRecurso` (reposición),
-`decisionRecurso` [FAVORABLE/DESFAVORABLE]. *(SIN `concedeApelacion`/2ª instancia.)*
+`practicaPruebas`, `alegatos`, `fechaSentencia`, `decisionSentencia`. *(SIN recurso contra la
+sentencia: única instancia → fallo EN FIRME; sin `hayRecurso`/apelación/`concedeApelacion`/2ª instancia.)*
 
 ## Etapas (reglas clave)
 | orden | etapa | disponibleSi | camposReq | docsReq | plazo |
@@ -167,8 +165,7 @@ posesorios · propiedad horizontal · alimentos (los que correspondan) · otros 
 | 6 | `contestacion` | — | contestaron | (SÍ)contestacion.pdf/(NO)auto-silencio.pdf | — |
 | 7 | `audienciaUnica` | — | conciliaResultado + (requeridosSi conciliaResultado=NO → fechaSentencia, decisionSentencia + sentencia.pdf) | — | — |
 | 7 | `terminada_conciliacion` (term) | conciliaResultado=SI | — | — | — |
-| 8 | `recurso` | — | hayRecurso | — | 3 |
-| 9 | `terminada` (term) | — | — | — | — |
+| 8 | `terminada` (term) | — | — | — | — |   ← sentencia en firme (única instancia, sin recurso)
 
 ## Notas de diseño
 - **Demandado (verbal):** si se modela `rol`, el demandado **no califica** (la `calificacion`,
@@ -196,7 +193,7 @@ Estos dos tipos usan el **mismo motor** que el laboral/DdP/tutela (`esquema.ts` 
 3. **Guardar lo diligenciado antes de avanzar** (`flush`): si hay cambios sin guardar y se
    hace clic en una etapa, primero se guardan y se reevalúa el avance.
 4. **Salto a terminal decidido** (`terminalDecidido`): si los datos ya implican un cierre
-   (retiro art. 93 = SÍ, rechazo definitivo, conciliación = SÍ), el proceso **se cierra solo**
+   (retiro de la demanda = SÍ, rechazo definitivo, conciliación = SÍ), el proceso **se cierra solo**
    al guardar, aunque falte papeleo intermedio. El botón muestra "Guardar y archivar/finalizar".
 5. **Ramas por opción** (`disponibleSi` `{todas}`/`{alguna}`) y **campos condicionales**
    (`mostrarSi`): las opciones que abren otro camino aparecen con su animación (`.lex-campo-reveal`).

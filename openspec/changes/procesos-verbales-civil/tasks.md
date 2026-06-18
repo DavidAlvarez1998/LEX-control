@@ -1,14 +1,8 @@
 # Tasks — procesos-verbales-civil
 
 > Estado: **PLAN SDD** (diseño escrito; **nada aplicado**). La API está en reestructuración →
-> no tocar el seed todavía. Implementar cuando esté lista y tras confirmar las decisiones del
-> `proposal.md` (rol, cuantía, plazos hábiles, 2ª instancia completa).
-
-## 0. Confirmaciones previas (con el usuario)
-- [ ] ¿Modelar `rol` (Demandante/Demandado) en el verbal? (calificación solo del demandante)
-- [ ] ¿Capturar `cuantiaTipo` (Mayor/Menor) o basta el monto?
-- [ ] Plazos en días **hábiles** (CGP 118): traslado 20 (verbal)/10 (sumario), subsanación 5, recurso 3
-- [ ] ¿2ª instancia del verbal completa (remisión→sustentación→audiencia→sentencia 2ª) o resultado único?
+> no tocar el seed todavía. **Alcance fijado: tal como dicta el CGP**, sin enriquecimientos
+> (ver `proposal.md` → Alcance). Implementar cuando la API esté lista.
 
 ## 1. Seed — `Proceso declarativo verbal` (reescribir entrada)
 - [ ] `esquemaFormulario`: campos intake + `soloFicha` (ver `design.md` §A)
@@ -21,7 +15,7 @@
 
 ## 2. Seed — `Proceso verbal sumario` (reescribir entrada)
 - [ ] `esquemaFormulario` (ver `design.md` §B; sin reconvención/2ª instancia)
-- [ ] `etapas`: presentacion→calificacion→[subsanacion|archivado_rechazo]→retiro→[archivado|traslado]→contestacion→[audienciaUnica|terminada_conciliacion]→recurso(reposición)→terminada
+- [ ] `etapas`: presentacion→calificacion→[subsanacion|archivado_rechazo]→retiro→[archivado|traslado]→contestacion→[audienciaUnica|terminada_conciliacion]→terminada (sentencia EN FIRME, sin recurso)
 - [ ] documentos anclados + plazos (10/5/3 hábiles) + `fase` por etapa
 - [ ] `esJudicial=true`, jurisdicción `ORDINARIA_CIVIL`
 

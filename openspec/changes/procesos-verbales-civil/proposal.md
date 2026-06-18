@@ -32,8 +32,9 @@ está en reestructuración). Cuando se aplique, será reescribir las dos entrada
 
 ### 2. Proceso verbal sumario — CGP 390–392
 - **Única instancia** (NO apelable), **1 sola audiencia** (art. 392). Traslado **10 días
-  hábiles**. Sin reconvención, sin excepciones previas separadas, sin intervención de terceros.
-  Recurso = **reposición**.
+  hábiles**. Sin reforma, reconvención, excepciones previas, incidentes, acumulación, suspensión
+  de común acuerdo ni terceros (art. 392). **La sentencia queda EN FIRME** — NO procede
+  apelación NI reposición contra el fallo (CGP art. 318).
 
 ### 3. En ambos
 - **Documentos anclados** (demanda/pruebas/anexos/poder/auto/notificación/sentencia…) — hoy no
@@ -51,12 +52,16 @@ está en reestructuración). Cuando se aplique, será reescribir las dos entrada
   ficha genérica los renderiza; el stepper por fases ya es genérico para judiciales).
 - **Reusa** la infraestructura del laboral (mismo patrón de etapas/ramas/2ª instancia).
 
-## Alcance / decisiones a confirmar
-1. **Modelar `rol` (Demandante/Demandado)** en el verbal como en el laboral (la calificación es
-   solo del demandante; el demandado recibe). ¿OK, o lo dejamos solo demandante por ahora?
-2. **Cuantía**: verbal = mayor/menor (ambas doble instancia); sumario = mínima + asuntos del
-   art. 390. ¿Capturamos `cuantiaTipo` o basta el monto?
-3. **Plazos**: traslado 20 (verbal) / 10 (sumario) días hábiles; subsanación 5; apelación 3.
-   ¿Confirmas hábiles (CGP 118)?
-4. **2ª instancia del verbal**: ¿la modelamos completa (remisión→sustentación→audiencia→
-   sentencia 2ª) como en el laboral, o la dejamos como un único resultado?
+## Alcance — nos limitamos a lo que dicta el CGP (decisión del usuario)
+
+NO se agregan enriquecimientos fuera del flujo que el CGP impone. **Excluidos** (quedan fuera
+de este diseño): desistimiento expreso/tácito, casación, sentencia anticipada como rama,
+conciliación-como-requisito que gatee, y terminales diferenciados por resultado. Se modela el
+**trámite tal como dicta el código**:
+- **Plazos** (CGP art. 118 = días hábiles): traslado 20 (verbal) / 10 (sumario), subsanación 5,
+  apelación 3.
+- **2ª instancia del verbal**: completa (remisión→sustentación→audiencia→sentencia 2ª), porque
+  el verbal **es de doble instancia** por definición (CGP).
+- **Verbal sumario**: única instancia → **sentencia en firme, sin recurso** contra el fallo.
+- **`rol` (Demandante/Demandado)** y **`cuantiaTipo`**: se modelan (son parte real del trámite);
+  la calificación es solo del demandante.
