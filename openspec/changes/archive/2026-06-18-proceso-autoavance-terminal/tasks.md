@@ -20,4 +20,4 @@
       sin decisión terminal no cierra (40/0)
 - [x] Suite API completa 424/424
 - [x] Build cliente verde
-- [ ] Smoke manual en vivo (escribir sin guardar → clic avanzar → guarda y avanza/guía) + commit
+- [x] Smoke manual en vivo (escribir sin guardar → clic avanzar → guarda y avanza/guía) + commit

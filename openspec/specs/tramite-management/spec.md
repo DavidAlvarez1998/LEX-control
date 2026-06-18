@@ -506,3 +506,78 @@ ends at the terminal `terminada`.
 - GIVEN `decisionSentencia = "Desfavorable"` and `hayRecurso = SI`
 - WHEN the sentencia stage is completed
 - THEN the recurso document is offered and `decisionRecurso` is captured (no blocking)
+
+### Requirement: Auto-advance jumps to a decided terminal
+> ADDED by change `proceso-autoavance-terminal`.
+
+On saving a proceso's `datos`, in addition to the conservative step-by-step auto-advance, the
+engine MUST advance directly to a **terminal** stage when ALL of: the terminal carries a
+`disponibleSi` that is satisfied by the current `datos`; the terminal's `orden` is greater than
+the current stage's; it is the **only** terminal whose `disponibleSi` is satisfied; and the
+terminal's own required fields/documents (if any) are present. The intermediate stages' pending
+requirements MUST NOT block this jump (a withdrawal/rejection/settlement ends the process
+regardless of unfinished paperwork). This MUST run only as a fallback to the conservative
+advance (which is unchanged), and MUST NOT apply to terminals without `disponibleSi` (e.g. a
+natural `terminada`, which still requires walking the flow).
+
+#### Scenario: Withdrawal archives immediately from any earlier stage
+- GIVEN a "Proceso Laboral" at `presentacion` with no admisión paperwork uploaded
+- WHEN `datos` are saved with `hayRetiro = "SI"`
+- THEN the proceso jumps to the terminal `archivado` and `estado` becomes `CERRADO`
+
+#### Scenario: No decided terminal does not close the process
+- GIVEN a proceso whose saved `datos` satisfy no terminal's `disponibleSi`
+- WHEN `datos` are saved
+- THEN the proceso does not jump to any terminal (it only advances conservatively)
+
+#### Scenario: Two satisfied terminals do not auto-jump
+- GIVEN `datos` that satisfy the `disponibleSi` of two different terminal stages
+- WHEN `datos` are saved
+- THEN no terminal jump occurs (the choice is left to the user)
+
+### Requirement: Advancing a stage first persists unsaved form edits
+> ADDED by change `proceso-autoavance-terminal`.
+
+In the proceso ficha, when the user triggers a stage transition while the form holds unsaved
+edits, the UI MUST first persist those edits (tolerant save — incomplete drafts allowed) so the
+transition is evaluated against the latest diligenced data. If that save auto-advanced the
+proceso to the requested stage (or closed it), the UI MUST NOT issue a redundant move; otherwise
+it proceeds with the transition, surfacing the existing block-and-guide behavior when data is
+still missing.
+
+#### Scenario: Clicking advance saves typed-but-unsaved data first
+- GIVEN the form has unsaved edits that complete the requirements of the next stage
+- WHEN the user clicks that stage in the stepper
+- THEN the edits are saved first and the proceso advances (no "missing data" block)
+
+#### Scenario: Still-missing data after the save guides the user back to the form
+- GIVEN the unsaved edits do NOT complete the next stage's requirements
+- WHEN the user clicks that stage
+- THEN after saving, the transition is blocked and the form opens highlighting what is missing
+
+### Requirement: Conditional fields are indented by dependency depth
+> ADDED by change `form-indentacion-condicional`.
+
+The dynamic form renderer (`FormularioDinamico`) MUST indent each visible field by the depth
+of its `mostrarSi` dependency chain: a field without `mostrarSi` is level 0 (no indent); a
+field whose `mostrarSi` references a field at level N renders at level N+1, with a left visual
+guide. The indent is **effective**: it applies only when the field is contiguous with what it
+depends on (its parent is the immediately preceding visible field, or a sibling/descendant of
+the same group); when an unrelated field sits between the parent and the conditional field, the
+latter is NOT indented (drawing it stepped under an unrelated field would imply a false
+dependency). This is presentation-only — it MUST NOT change validation, requiredness or stage
+gating — and applies to every dynamic form (all grupos and any future catálogo), derived from
+the existing conditions without seed changes.
+
+#### Scenario: A revealed sub-option appears indented under the option that triggered it
+- GIVEN a field "Decisión del juez sobre la reconvención" and a field
+  "Decisión tras la subsanación (reconvención)" whose `mostrarSi` references it
+- WHEN the first is set so the second appears
+- THEN the second renders indented one level under the first
+- AND a field that depends on that second one appears indented one more level
+
+#### Scenario: A conditional field separated from its parent is not indented
+- GIVEN "Fecha de radicación" depends on `rol = Demandante` but "Tipo de instancia" and
+  "¿Requiere poder?" render between `rol` and it
+- WHEN the form is shown
+- THEN "Fecha de radicación" is NOT indented under "¿Requiere poder?" (no false dependency)

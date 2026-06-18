@@ -1,0 +1,24 @@
+change: form-indentacion-condicional
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-requested
+  layer: presentation-only # FormularioDinamico render; sin schema/RBAC/gating
+  schema: no-change
+  rbac: no-change
+phases:
+  explore: done
+  propose: done
+  spec: delta # specs/tramite-management (+1 ADDED: conditional indent by depth, effective/contiguous)
+  design: done
+  tasks: done
+  apply: done # FormularioDinamico: nivel por cadena mostrarSi + indent EFECTIVO (solo si contiguo al padre)
+  verify: green # tsc client + build verde; corrige el bug reportado (fechaRadicacion bajo requierePoder)
+  archive: done # 2026-06-18 (delta fusionado a specs/tramite-management)
+capabilities:
+  modified:
+    - tramite-management
+notes: |
+  Campos condicionales indentados por profundidad de mostrarSi, pero EFECTIVO: solo se indenta si el
+  campo está pegado a su padre (arregla "Fecha de radicación" colgando de "¿Requiere poder?"). Solo
+  presentación, aplica a todo formulario dinámico. Commiteado en client 21235ab (pusheado).

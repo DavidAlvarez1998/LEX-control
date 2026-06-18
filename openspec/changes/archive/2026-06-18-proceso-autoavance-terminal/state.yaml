@@ -1,0 +1,25 @@
+change: proceso-autoavance-terminal
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-requested
+  layer: domain+presentation # engine terminal-jump + ficha save-before-advance
+  schema: no-change
+  rbac: no-change
+phases:
+  explore: done
+  propose: done
+  spec: delta # specs/tramite-management (+2 ADDED: terminal jump, save-before-advance)
+  design: done
+  tasks: done
+  apply: done
+  verify: green # vitest 424/424 + smoke laboral 40/0; tsc client limpio
+  archive: done # 2026-06-18 (deltas fusionados a specs/tramite-management)
+capabilities:
+  modified:
+    - tramite-management
+notes: |
+  Auto-advance salta directo a un terminal DECIDIDO (retiro/rechazo/conciliación) sin exigir el
+  papeleo de etapas intermedias; y la ficha persiste ediciones sin guardar antes de mover de etapa.
+  Verificado por tests automáticos (smoke laboral 40/0). Commiteado en api 82ce534 / client 21235ab
+  (pusheado). Smoke manual en vivo opcional/no bloqueante.
