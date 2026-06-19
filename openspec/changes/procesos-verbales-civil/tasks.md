@@ -1,6 +1,19 @@
 # Tasks — procesos-verbales-civil
 
-> Estado: **APLICADO + VERIFICADO** (2026-06-18). Seed reescrito (verbal 51 campos/18 etapas; sumario 25/11), grupo=JUDICIAL + esJudicial=true. 442 tests API (8 nuevos: tests/verbales-flujos.test.ts) + re-seed (40 tipos) + build cliente verde. SIN commit. Alcance: tal como dicta el CGP.
+> Estado: **REESCRITO FIEL AL DOC + VERIFICADO** (2026-06-19). 2ª pasada: el seed genérico se
+> reescribió FIEL a `doc-verbal.md` / `doc-verbal-sumario.md` (de los .docx). Ahora **verbal = 144
+> campos / 16 etapas; sumario = 104 / 12**. Cubre lo que faltaba (ver `validacion-vs-doc.md`):
+> CALIDAD 7 roles · datos de partes · unidad/cuantía/pretensión determinada→montos · MÓDULO MEDIDAS
+> CAUTELARES (19 campos: solicitud→tipo→decisión→caución→ejecución→levantamiento) · calificación
+> detallada (admisión/inadmisión→subsanación 5d→decisión/recurso · rechazo→recurso) · traslado
+> (20d verbal / 10d sumario) · reconvención · excepciones de mérito (verbal) · audiencia inicial 372
+> + instrucción 373 (asistencias/conciliación/decreto de pruebas/sentencia inmediata/alegatos) ·
+> sentencia (tipo/resultado/costas) · recursos (apelación/aclaración/corrección/adición/reposición)
+> + 2ª instancia (efecto/ponente/resultado). Sumario ⭐: demanda Verbal/Escrita · ¿mínima cuantía? ·
+> correo del juzgado · reposición vs auto admisorio · SENTENCIA ANTICIPADA sin audiencia · audiencia
+> ÚNICA 392 · sin 2ª instancia. Gate: **448 tests API** (12 flujos en `tests/verbales-flujos.test.ts`,
+> todas las ramas caminan sin estancarse) + tsc + re-seed (`seed:catalogo`, BD verificada) + build
+> cliente verde. SIN commit. Mutua-exclusividad y no-deadlock de `disponibleSi` verificados por el motor real.
 
 ## 1. Seed — `Proceso verbal` (reescribir entrada)
 - [x] `esquemaFormulario`: campos intake + `soloFicha` (ver `design.md` §A)
@@ -18,8 +31,8 @@
 - [x] `esJudicial=true`, jurisdicción `ORDINARIA_CIVIL`
 
 ## 3. Re-seed y verificación
-- [x] `pnpm seed:catalogo` (upsert + `esquemaVersion++`)
-- [x] Test de flujos (estilo `tests/laboral-flujos.test.ts`): cada camino camina y termina sin estancarse
+- [x] `pnpm seed:catalogo` (upsert; 38 tipos actualizados; BD verificada: verbal 144/16, sumario 104/12)
+- [x] Test de flujos reescrito al nuevo vocabulario (12 escenarios): admisión→audiencias→apelación→2ª inst; sin apelar; sentencia inmediata; inadmisión→subsana/no-subsana; rechazo→recurso; conciliación total; sumario audiencia única / sentencia anticipada / rechazo
 - [ ] Smoke e2e en vivo (estilo `scripts/smoke-laboral-flujo.ts`) — opcional; el test de flujos ya cubre los caminos con el motor real
 - [x] Build cliente verde (la ficha genérica + stepper por fases ya los soporta)
 
