@@ -1,0 +1,34 @@
+change: catalogo-edit-vs-seed
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-question # "¿cómo quedó el catálogo del admin vs los procesos que creamos? si modifico allá ¿daña lo del client?"
+  naturaleza: solo-documentacion # comportamiento YA implementado; este change lo codifica en spec (no toca código)
+  comportamiento_verificado:
+    update_tipo: catalog.service.updateTipo sobrescribe esquemaFormulario+etapas con lo que envía el form (updateTipoProcesoSchema los exige) + esquemaVersion++
+    form_admin: catalogo-procesos/page.tsx guarda snapshot crudo (origCampos/origEtapas) y mergea solo lo editable; conserva ayuda/mostrarSi/requeridoSi/soloFicha (campos) y documentosRequeridos/requeridosSi/opcionalesSi/plazos/ramas/terminal/disponibleSi/accion (etapas); aviso ámbar si tipoAvanzado
+    seed: pnpm seed:catalogo (upsert desde prisma/seed-tipos.json) sobrescribe esquemaFormulario+etapas; NO borra procesos
+  regla:
+    fuente_de_verdad: seed-tipos.json para tipos curados (verbal, sumario, laboral, DdP, tutela)
+    admin_edits: transitorios para tipos curados → el próximo seed:catalogo los revierte
+    borrar_fila_admin: sí elimina el campo/etapa (merge no preserva lo removido) hasta reseed
+    admin_para: crear tipos nuevos del despacho o metadata básica
+phases:
+  explore: done # verificado en catalog.service.ts/catalog.schemas.ts + admin catalogo-procesos/page.tsx
+  propose: done
+  spec: added # 2 requirements al capability tramite-catalog (editar conserva avanzado + seed fuente de verdad)
+  design: inline
+  tasks: n/a # sin código
+  apply: n/a # comportamiento ya implementado
+  verify: n/a
+  archive: pending # al fusionar, mover los 2 requirements a openspec/specs/tramite-catalog/spec.md
+capabilities:
+  modified:
+    - tramite-catalog
+relacionado:
+  - design-color-system # otro change de esta sesión
+  - procesos-verbales-civil # los flujos curados que motivan la duda
+notes: |
+  Confirma la nota previa "admin-catalogo-edit-preserva" con evidencia en código. El riesgo
+  real no es que el admin corrompa el flujo (está protegido por el merge), sino que las
+  ediciones del admin a tipos curados se pierdan en el próximo reseed. Rama feat/cuenta-clientes.
