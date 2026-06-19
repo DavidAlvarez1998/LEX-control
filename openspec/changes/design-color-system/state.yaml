@@ -10,15 +10,16 @@ decisions:
   hallazgos_media: [indigo-dark-variants-/10-vs-/950-40, red-100-vs-red-50, ghost-border-700-vs-600, descartado-gris-no-comunica]
   hallazgos_baja: [slate-400-sobre-slate-100-3.5:1-WCAG, spans-sin-dark-text-explicito]
   semanticos: un-helper-central # estadoTono() (ya hay bits.tsx en contable) reusado; rose=dinero-negativo ≠ red=peligro
-  warm_neutral: opcional-a-decidir # explorar grises un punto más cálidos vs mantener slate puro
+  warm_neutral: mantener-slate # 2026-06-19 usuario eligió conservar slate (gris frío) — sin warm tint
+  alcance_elegido: tokens+arreglar-hallazgos # 2026-06-19 usuario eligió tokens en globals + migrar componentes COMPARTIDOS + arreglar hallazgos (NO barrido completo de pantallas)
 phases:
   explore: done # 2 Explore agents: inventario completo (acento indigo, neutrales slate, semánticos, sin tokens, landing gradiente indigo#4f46e5→violet#7c3aed) + inconsistencias archivo:línea + compare cliente vs admin (Card difiere)
   propose: done
   spec: added # capability design-color-system: tokens theme-aware + jerarquía profundidad + 1 acento + semánticos consistentes/suaves + contraste AA + calidez
   design: inline # proposal.md (diagnóstico + hallazgos por severidad + recomendaciones con tabla de tokens + psicología)
   tasks: inline
-  apply: pending # NADA aplicado aún (es validación/doc). Implementación por fases: (1) tokens en globals.css + migrar componentes compartidos; (2) arreglar hallazgos puntuales; (3) helper estadoTono central; (4) opcional neutral cálido
-  verify: pending
+  apply: done # 2026-06-19 FASE 1+2 aplicadas: tokens theme-aware en globals.css (ambos portales: --bg/surface/subtle/chrome/line/hover/foreground/muted/accent/accent-hover → @theme inline) + migrados componentes COMPARTIDOS (ui.tsx, form-ui.tsx client, topbar, layout dashboard, root body) a utilidades token + hallazgos: EstadoBadge ahora con dark, Card cliente==admin, topbar border/bg unificado (bg-chrome), fondo admin slate-300/800→bg-bg, red-100→red-50, conteo "No actualizado" slate-400→text-muted. NO se tocó sidebar (chrome permanentemente oscuro: tokens flip-tema lo romperían). Pendiente: helper estadoTono central (fase 3) + barrido de pantallas (follow-up)
+  verify: build-green # ambos portales `pnpm build` exit 0 (2026-06-19). Falta smoke VISUAL del usuario (claro/oscuro)
   archive: pending
 capabilities:
   added:
@@ -29,7 +30,7 @@ applies_to:
 follow_ups:
   - Tipografía/espaciado/iconografía (otro change)
   - Migración completa de clases crudas slate-*/indigo-* → utilidades token (barrido grande)
-next: confirmar con el usuario alcance (solo arreglos puntuales vs tokens completos; ¿neutral más cálido?). Luego aplicar por fases.
+next: smoke visual del usuario (claro+oscuro en ambos portales). Luego, si se quiere: helper estadoTono central (fase 3) + barrido de clases crudas restantes por pantalla → utilidades token (follow-up grande).
 notes: |
   El re-theming reciente ya dejó: fondo claro slate-100 + tarjetas blancas + "No actualizado"
   slate-100; oscuro contenido slate-950 + chrome slate-900 + tarjetas slate-800. Falta
