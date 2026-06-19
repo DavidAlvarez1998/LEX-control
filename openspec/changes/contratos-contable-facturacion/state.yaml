@@ -1,0 +1,52 @@
+change: contratos-contable-facturacion
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "usa SDD para averiguar y planear cómo se relacionan Contratos (equipo) + Contable + Facturación en el client"
+  naturaleza: solo-plan # averiguar + planear; NO implementar (pedido del usuario)
+  hallazgo_clave: dos-contratos-distintos # Contrato (RR.HH./equipo, usuarioId) vs ContratoComercial (servicio al cliente, embudo)
+  modelo:
+    hub: contable # libro mayor que consolida
+    ingresos: ContratoComercial → ConfiguracionCobro → Factura → Ingreso(facturaId)
+    costos_equipo: Contrato(RRHH) → Nomina(empleadoId snapshot) → egreso en reporte
+    comisiones: ComisionDespacho (comercial cierra ContratoComercial)
+    consolidacion: contable.reporte ya hace utilidad = ingresos − (egresos+nomina+serviciosFijos+caja)
+  huecos:
+    - Nomina sin contratoId (solo empleadoId + snapshot) → enlace débil
+    - sin recurrencia de nómina (manual por periodo) [memoria: Recurrencia=Fase 2]
+    - formaPago (Mensual/Por caso/Comisión) no ramifica el costo
+    - sin rentabilidad por cliente/proceso (no se imputa costo del equipo a procesos)
+  fases:
+    1: enlace+trazabilidad (Nomina.contratoId) — bajo riesgo
+    2: recurrencia de nómina (generar del periodo desde contratos activos Mensuales, idempotente)
+    3: formaPago dirige el costo (por caso→egreso/proceso; comisión→ComisionDespacho)
+    4: rentabilidad por cliente/proceso (imputar costo del equipo)
+phases:
+  explore: done # schema (Contrato/Nomina/Factura/Ingreso/Egreso/ServicioFijo/Usuario/ContratoComercial/ComisionDespacho) + contable.reporte (P&L ya consolida)
+  propose: done # proposal.md (modelo + huecos + plan por fases)
+  spec: pending # se redactan specs por capability tras confirmar las 4 decisiones
+  design: inline
+  tasks: pending
+  apply: pending # el usuario pidió SOLO plan; no implementar
+  verify: pending
+  archive: pending
+capabilities:
+  afectadas_a_futuro:
+    - contable-nomina
+    - facturacion
+    - contratos
+    - contable-reportes
+decisiones_pendientes:
+  - nómina autogenerada (Fase 2) vs manual con prellenado
+  - rentabilidad por cliente/proceso (entran Fases 3-4?)
+  - contratos por comisión/por caso ahora o después
+  - nómina con valores bloqueados (snapshot) vs editable por periodo
+relacionado:
+  - sdd-nomina-desde-contrato # nómina se prellena desde Contrato; recurrencia quedó como Fase 2
+  - sdd-facturacion-module # Factura → Ingreso (facturaId)
+  - contratos-module # Contrato RR.HH. + vínculo a Usuario
+  - sdd-contable-module # reporte/P&L
+next: el usuario consulta con su cliente; confirmar las 4 decisiones → redactar specs por fase y aplicar incrementalmente.
+notes: |
+  El usuario aclaró que esto lo consulta más con su cliente; por ahora es solo el plan SDD.
+  Rama feat/cuenta-clientes. No se tocó código.
