@@ -1,0 +1,41 @@
+change: landing-contacto-comercial
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "la landing del client como canal para contactar a un comercial; entra como prospecto sin asignar; se asigna a cualquiera/uno mismo/lo decide el admin"
+  endpoint: nuevo-publico-contacto # 2026-06-19 usuario: endpoint dedicado (no reusar solicitud-cuenta); form liviano + mensaje
+  asignacion: admin-a-cualquiera + comercial-auto-toma # 2026-06-19 usuario
+  reutiliza:
+    - Prospecto.comercialId nullable (sin asignar = nativo)
+    - CanalEntrada.WEB
+    - /publico rate-limit(30/h) + honeypot; ya existe POST /publico/solicitud-cuenta
+    - ventas.listProspectos(estado,canal,comercialId) + scope(comercial ve los suyos)
+    - admin ya asigna via PATCH (assertComercial valida rol COMERCIAL)
+    - SeguimientoProspecto + agenda + comisiones operan sobre el Prospecto
+  construye:
+    - POST /publico/contacto → Prospecto WEB sin asignar, NUEVO, mensaje→notas
+    - ventas: accion tomar (comercial auto-asigna sin-dueño; 409 si ya tiene) + filtro sin-asignar (comercialId null)
+    - client landing: form "Habla con un asesor"
+    - admin prospectos: bandeja "Sin asignar" + Tomar/Asignar + badge canal
+  sin_schema: true # comercialId ya nullable; CanalEntrada.WEB ya existe
+  distincion_contacto_vs_solicitud: por-notas # subcanal/enum = mejora futura
+phases:
+  explore: done # verificado: schema Prospecto, publico (solicitud-cuenta+honeypot+ratelimit), ventas (scope/assign), landing sin form
+  propose: done
+  spec: added # public-marketing-api (POST contacto) + admin-prospectos (sin-asignar + tomar) + public-landing (form)
+  design: inline
+  tasks: done # tasks.md por capa (api publico/ventas, client landing, admin prospectos)
+  apply: done # 2026-06-19 aplicado por capas: api 875a60d (publico /contacto + ventas tomar/sinAsignar +9 tests) / client 3997e9a (landing "Habla con un asesor") / admin d92ee1b (bandeja sin asignar + Tomar)
+  verify: tests+tsc # api vitest 461/461 + tsc 3 repos verde. Falta smoke en vivo (enviar contacto → sin asignar → tomar/asignar)
+  archive: pending
+capabilities:
+  added: []
+  modified:
+    - public-marketing-api
+    - admin-prospectos
+    - public-landing
+fuera_de_alcance:
+  - notificacion/email automatico al comercial al entrar un contacto
+  - captcha real (por ahora honeypot + rate-limit)
+  - subcanal enum contacto-vs-solicitud
+next: aprobar el plan y aplicar por capas (API publico+ventas con tests → client landing → admin prospectos). Rama feat/cuenta-clientes.
