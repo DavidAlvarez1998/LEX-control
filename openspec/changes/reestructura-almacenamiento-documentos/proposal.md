@@ -22,14 +22,17 @@ módulo** (lo que el doc recomienda), namespaceado por producto/entorno.
 
 ## Qué cambia
 
-### Almacenamiento (tecnovapp)
+### Almacenamiento (tecnovapp) — raíz paraguas única (estilo doc §7)
 ```
-{PREFIJO}-{TENANT} / {MÓDULO} / AÑO / MES / archivo
-   raíz {EMPRESA}      {CARPETA}    (server)
+{PREFIJO} / {TENANT}_{MÓDULO} / AÑO / MES / archivo
+raíz {EMPRESA}     {CARPETA}      (server)
 ```
-- `PREFIJO` = `env.documentos.raizPrefijo` (`DEMO-LEXCONTROL` demo · `LEXCONTROL` prod) — namespacing
-  en tecnovapp compartido. Reemplaza al antiguo `env.documentos.empresa` fijo.
-- `TENANT` = `ADMIN` (plataforma) · `{slug-nombre}-{empresaId}` (despacho) — helper `carpetaTenant()`.
+- `PREFIJO` = `env.documentos.raizPrefijo` (`DEMO-LEXCONTROL` demo · `LEXCONTROL` prod) — **única raíz**
+  del producto; mantiene limpia la raíz de tecnovapp (compartida). Reemplaza al antiguo
+  `env.documentos.empresa`. (Decisión: paraguas §7 en vez de raíz-por-tenant §9.1, porque el equipo
+  ya trabajaba bajo una sola carpeta y evita N carpetas en la raíz compartida.)
+- `{CARPETA}` = `carpetaModulo(empresa, modulo)` = `{TENANT}_{MÓDULO}` (único nivel libre).
+- `TENANT` = `ADMIN` (plataforma) · `{slug-nombre}-{empresaId}` (despacho).
 - `MÓDULO` = `CONTRATOS` · `PROCESOS` · (futuros: `EMPRESAS`, `USUARIOS`, `CLIENTES`, `FACTURACION`).
 - El id de la entidad (código de proceso / cédula) sigue en `documento` → nombre del archivo.
 

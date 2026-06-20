@@ -2,7 +2,9 @@
 
 > Patrón transversal y CANÓNICO para subir archivos en LEX Control. TODA capacidad que suba documentos (contratos, poderes/expedientes de procesos, y las futuras) DEBE seguir este patrón: el binario vive en un microservicio documental EXTERNO (tecnovapp); en nuestra BD guardamos únicamente la `path` relativa que devuelve, y la URL pública se RECONSTRUYE al leer. Referencia de implementación viva: `lex-control-api/src/modules/documentos/documentos.client.ts` y el módulo de contratos (`contratos.router.ts`, primer adoptante). Ver también `openspec/roadmap-docs/APIs/API-DOCUMENTOS-INTEGRACION (1).md`.
 >
-> **Estructura de carpetas (2026-06-20):** tecnovapp solo permite UN nivel de carpeta — la ruta es FIJA `{EMPRESA}/{CARPETA}/{AÑO}/{MES}/{archivo}` (el server agrega AÑO/MES y pasa a MAYÚSCULA; un 3er segmento da 404 y un "/" interno se vuelve "_"). Por eso la RAÍZ `{EMPRESA}` ES EL TENANT (convención del doc §9.1): `carpetaTenant(empresa)` = `${env.documentos.raizPrefijo}-${tenant}`, con `tenant` = `ADMIN` (plataforma) o `{slug-nombre}-{empresaId}` (despacho); y la `{CARPETA}` es el MÓDULO (`CONTRATOS`, `PROCESOS`, …). El id de la entidad va en `documento` (→ nombre del archivo). El detalle por proceso/contrato/cliente NO se modela en carpetas: vive en la BD (relaciones).
+> **Estructura de carpetas (2026-06-20):** tecnovapp solo permite UN nivel de carpeta — la ruta es FIJA `{EMPRESA}/{CARPETA}/{AÑO}/{MES}/{archivo}` (el server agrega AÑO/MES y pasa a MAYÚSCULA; un 3er segmento da 404 y un "/" interno se vuelve "_"). Se usa una **raíz paraguas única por producto** (estilo doc §7, ej. `FINOVA/…`): la RAÍZ `{EMPRESA}` = `env.documentos.raizPrefijo` (`DEMO-LEXCONTROL` / `LEXCONTROL`), y como solo hay un nivel libre, la `{CARPETA}` combina **tenant + módulo**: `carpetaModulo(empresa, modulo)` = `{tenant}_{modulo}`, con `tenant` = `ADMIN` (plataforma) o `{slug-nombre}-{empresaId}` (despacho). Así todo el producto queda bajo UNA raíz y los despachos quedan aislados por el prefijo del nombre de carpeta (ordenan juntos). El id de la entidad va en `documento` (→ nombre del archivo). El detalle por proceso/contrato/cliente NO se modela en carpetas: vive en la BD (relaciones).
+>
+> Ej.: `DEMO-LEXCONTROL / BUFETE-PEREZ-CL9A_PROCESOS / 2026 / 06 / 1781..._poder.pdf` · `DEMO-LEXCONTROL / ADMIN_USUARIOS / …`
 
 ## ADDED Requirements
 
@@ -33,12 +35,12 @@ Ningún módulo de negocio habla con `fetch` directo contra tecnovapp. Toda subi
 - THEN la URL pública se obtiene con `construirUrlDocumento(path)` (tolera path relativa, path con "/" inicial, o URL ya absoluta; devuelve null si no hay path)
 
 ### Requirement: Contrato de subirDocumento y configuración por entorno
-`subirDocumento` recibe `{ archivo: Buffer|Uint8Array, nombreArchivo, documento, raiz, carpeta, tipo? }` y devuelve `{ path, filename, url }`. `raiz` es la RAÍZ `{EMPRESA}` = el tenant, que se construye SIEMPRE con `carpetaTenant(empresa)` (nunca a mano); `carpeta` es el MÓDULO `{CARPETA}` (en MAYÚSCULA: `"CONTRATOS"`, `"PROCESOS"`, …); `documento` es el identificador del dueño (cédula, NIT, código de proceso). El prefijo de la raíz, la base URL y el timeout salen de `env.documentos` (`raizPrefijo`, `apiUrl`, `timeoutMs`). El microservicio antepone un timestamp al `filename`.
+`subirDocumento` recibe `{ archivo: Buffer|Uint8Array, nombreArchivo, documento, carpeta, tipo? }` y devuelve `{ path, filename, url }`. La RAÍZ `{EMPRESA}` la pone internamente `subirDocumento` desde `env.documentos.raizPrefijo` (paraguas único); `carpeta` es el único nivel libre y SIEMPRE se construye con `carpetaModulo(empresa, modulo)` = `{tenant}_{MÓDULO}` (nunca a mano), con módulo en MAYÚSCULA (`"CONTRATOS"`, `"PROCESOS"`, …); `documento` es el identificador del dueño (cédula, NIT, código de proceso). La base URL y el timeout salen de `env.documentos` (`apiUrl`, `timeoutMs`). El microservicio antepone un timestamp al `filename`.
 
-#### Scenario: La path incluye tenant, módulo y fecha
-- GIVEN una subida de un proceso de la empresa `{id, nombre}` con `carpeta = "PROCESOS"`
+#### Scenario: La path incluye paraguas, tenant_módulo y fecha
+- GIVEN una subida de un proceso de la empresa `{id, nombre}` con `carpetaModulo(empresa, "PROCESOS")`
 - WHEN el servicio responde
-- THEN la `path` tiene la forma `{raizPrefijo}-{slug}-{id}/PROCESOS/{YYYY}/{MM}/{filename}`
+- THEN la `path` tiene la forma `{raizPrefijo}/{slug}-{id}_PROCESOS/{YYYY}/{MM}/{filename}`
 
 #### Scenario: Fallo del microservicio no confirma a medias
 - GIVEN el microservicio no responde a tiempo o responde con error
