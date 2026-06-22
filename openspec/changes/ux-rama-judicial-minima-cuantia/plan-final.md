@@ -13,12 +13,19 @@ acota a un set pequeño de alto impacto**. El resto queda parqueado (no descarta
 3. **P9 — Importar los PDF del expediente** · detalle en `diseno-p9-importar-documentos.md`.
    La de mayor impacto; 1 campo (`origenRamaIdReg`) + cliente + UI on-demand.
 
-### Fase B — Pulido (opcional, casi gratis — un solo paquete)
-"Tanda 1" de claridad/confianza, todo copy/estilo + 2 campos (detalle en `diseno-detallado.md`):
-- **P3** separar "Avance en el despacho" vs "Lo que publica el juzgado 🏛️"
-- **P5** frescura ("sincronizado hace X · última actuación …") — campo `actuacionesSyncAt`
-- **P7** disclaimer de confianza · **P13** contador visible + feedback persistente
-- **P8** origen del dato ("de la Rama") · **P14** mínima cuantía = cuantía implícita
+### Fase B — Pulido (IMPLEMENTADA 2026-06-22)
+"Tanda 1" de claridad/confianza:
+- [x] **P3** separar "Avance en el despacho" vs "🏛️ Lo que publica el juzgado" (copy + microcopy)
+- [x] **P5** frescura ("sincronizado hace X · última actuación …") — campo `Proceso.actuacionesSyncAt`
+      (push), seteado en `sincronizarProceso`, expuesto en el detalle, helper `haceCuanto`
+- [x] **P7** disclaimer de confianza al pie del panel del juzgado
+- [x] **P13** contador del radicado más visible (text-sm + negrita)
+- [~] **P14** cuantía implícita → **ya estaba resuelto**: el bloque genérico de cuantía ya se oculta
+      para el ejecutivo (`!esEjecutivo(tipo)`); su cuantía va por su propio campo. Sin cambios.
+- [ ] **P8** origen del dato ("de la Rama") → **diferido**: requiere un marcador real por-campo
+      (qué campo autollenó el sync); sin él, etiquetar "de la Rama" sería adivinar. Bajo valor.
+
+Gate: tsc API+client · vitest 485 · build client. Commiteado.
 
 ## ⏸ Parqueado (no ahora)
 P6 (badge reservado), P10 (importar partes/Sujetos), P11 (card Estado/ubicación), P16 (actualizar
