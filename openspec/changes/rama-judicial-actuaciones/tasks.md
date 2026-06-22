@@ -48,9 +48,13 @@
       - Schema `Proceso.actuacionesVistasAt` (push hecho). `listarActuaciones` devuelve `nueva` por ítem
         (createdAt > vistasAt); POST `/:id/actuaciones/marcar-vistas`. Ficha: badges persistentes + contador
         + botón "Marcar como vistas". (Simplificación: por-proceso, no por-usuario.)
-- [x] **#4 Autollenar el juzgado si está vacío (incremento 2)**
-      - En `sincronizarProceso`: al llamar al Endpoint A capturamos `despacho` y seteamos `despachoJuzgado`
-        solo si está vacío (no pisa lo escrito por el abogado).
+- [x] **#4 Autollenar juzgado + fecha de radicación si están vacíos (incremento 2 + 3)**
+      - `sincronizarProceso`: del Endpoint A toma `despacho` y `fechaProceso`; setea `despachoJuzgado`
+        (columna) + `datos.juzgado` + `datos.fechaRadicacion` + `datos.ultimaActuacion` SOLO si el campo
+        existe en el esquema del tipo y está vacío (guarda por esquema → sin claves desconocidas, no pisa).
+      - DTO `ProcesoRama +fechaProceso`. UX: al guardar un radicado de 23 díg en la ficha, se consulta la
+        Rama y se autocompletan juzgado + fecha + actuaciones (RadicadoDato auto-sincroniza al guardar).
+      - Contador de dígitos en vivo en el input del radicado (✓ 23 / faltan N / sobran N).
 - [x] **Sincronización masiva + anti-bloqueo (cron) — IMPLEMENTADO (incremento 1)**
       - Retry + backoff exponencial en `rama-judicial.http.ts` (403/429/5xx/red; env retryAttempts/initial/max;
         intentos=1 en test).
@@ -67,6 +71,10 @@
         se baja a 1×/día sin tocar código.
 - [ ] (follow-up) Campanita in-app global (modelo Notificacion + topbar en ambos portales)
 - [ ] (follow-up) "Nuevas" por-usuario (hoy es por-proceso)
+- [ ] (follow-up · documentado en specs/rama-judicial/spec.md) Aprovechar la superficie EXTRA de la
+      CPNU (explorada en vivo, no consumida): Detalle (tipo/clase/ubicación), Sujetos (autopoblar
+      Partes), Documentos + Descarga (importar los PDFs del expediente al proceso). Cada uno respeta
+      el §4 anti-bloqueo; la descarga es por `idRegDocumento`.
 
 ## Correcciones legales detectadas (ver validacion-ley-y-realidad.md) — decisión del usuario
 - [ ] A6: separar plazo del mandamiento (pagar 5 días art.431 vs excepciones 10 días art.442)

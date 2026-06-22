@@ -137,3 +137,42 @@ curl "https://consultaprocesos.ramajudicial.gov.co:448/api/v2/Procesos/Consulta/
 curl "https://consultaprocesos.ramajudicial.gov.co:448/api/v2/Proceso/Actuaciones/1810780324?pagina=1" \
   -H "User-Agent: Mozilla/5.0"
 ```
+
+## Superficie COMPLETA de la API (explorada en vivo 2026-06-22 — NO consumida aún)
+
+Sondeo en vivo con `idProceso 1810780324`. La CPNU expone bastante más que radicado→
+idProceso→actuaciones. Documentado para futuras fases; **hoy solo se consumen A y B**.
+
+### Campos crudos del Endpoint A (Consulta) — además de los ya usados
+`idConexion`, `llaveProceso` (= el radicado), `cantFilas`. (Ya se usan `idProceso`,
+`despacho`, `fechaProceso`, `fechaUltimaActuacion`, `departamento`, `sujetosProcesales`, `esPrivado`.)
+
+### Endpoint C — Detalle del proceso  `GET /Proceso/Detalle/{idProceso}`  → 200
+Devuelve un objeto con: `tipoProceso` (p. ej. "ORDINARIO"), `claseProceso` ("REPETICION"),
+`subclaseProceso`, `ponente`, `recurso`, `ubicacion` ("Secretaria"), `contenidoRadicacion`
+(texto libre: "TRAE UN ORIGINAL EN 83 FOLIOS 1CD…"), `codDespachoCompleto`,
+`fechaProceso`, `ultimaActualizacion`, `idRegProceso`.
+→ **Uso potencial:** autollenar tipo/clase/ubicación del proceso.
+
+### Endpoint D — Sujetos (partes ESTRUCTURADAS)  `GET /Proceso/Sujetos/{idProceso}`  → 200
+`{ sujetos: [{ idRegSujeto, tipoSujeto: "Demandante"|"Demandado", nombreRazonSocial,
+identificacion, esEmplazado, cant }], paginacion }`.
+→ **Uso potencial:** autopoblar el panel "Partes" (mejor que el string `sujetosProcesales`).
+
+### Endpoint E — Documentos del expediente  `GET /Proceso/Documentos/{idProceso}`  → 200
+Array de `{ idRegDocumento, idConexion, consActuacion, nombre, descripcion, tipo, fechaCarga }`
+(en el caso de prueba, 7 documentos).
+
+### Endpoint F — DESCARGA del documento  `GET /Descarga/Documento/{idRegDocumento}`  → 200
+Devuelve el **PDF real** (`application/pdf`; verificado: 384 KB, 2 páginas, cabecera `%PDF-`).
+→ **Uso potencial (alto valor):** importar los documentos del juzgado al proceso (tecnovapp),
+documento por documento (cada uno = 1 request → respetar el §4 anti-bloqueo).
+
+### Campos crudos del Endpoint B (Actuaciones) — además de los ya usados
+`idRegActuacion`, `consActuacion` (consecutivo), `llaveProceso`, `codRegla`, y
+**`conDocumentos`** (bool: la actuación tiene documentos anexos — en el caso de prueba,
+21 de 40 en la pág. 1). → enlaza actuación ↔ documentos descargables (E/F).
+
+> **Notas:** todo lo anterior comparte el rate-limiting (§4) — importar el expediente
+> completo son N requests, hay que espaciarlas. La descarga es **por documento**
+> (`idRegDocumento`); no hay "descargar todo de una".
