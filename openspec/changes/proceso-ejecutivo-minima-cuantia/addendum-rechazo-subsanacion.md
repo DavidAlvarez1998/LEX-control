@@ -1,7 +1,12 @@
 # Addendum — Rechazo de la demanda tras la subsanación (hueco del flujo)
 
-> Estado: **PLAN validado, NO implementado.** Detectado 2026-06-22 revisando el flujo
-> con el usuario. Es el único hueco funcional abierto del ejecutivo.
+> Estado: **IMPLEMENTADO + VERIFICADO 2026-06-22** (sin commit). Etapa terminal
+> `archivado_rechazo` (orden 11, hermana de `terminacion`) agregada al seed con
+> `disponibleSi {todas:[decisionCalificacion=Inadmite, decisionTrasSubsanacion=Rechazar]}`.
+> `pnpm seed:catalogo` aplicado (ejecutivo: 12 etapas). Decisión: cierre **CERRADO**
+> (sin cambio transversal del motor) · reposición NO modelada. Motor verificado por
+> simulación (Inadmite+Rechazar → archivado_rechazo terminal; Admitir → sigue) + tsc +
+> 484 tests. **Sin cambios de motor** (terminalDecidido ya lo resuelve).
 
 ## El hueco
 La etapa `subsanacion` tiene el campo `decisionTrasSubsanacion` con opciones
@@ -57,8 +62,8 @@ Agregar al seed del ejecutivo una etapa **terminal** `archivado_rechazo`:
 2. **¿Modelar la reposición?** Opcional, a futuro: campo `recursoReposicion`
    (interpuesto/decidido) + rama que reabra si la reposición prospera. v1: no.
 
-## Tareas (cuando se apruebe)
-- [ ] Agregar la etapa `archivado_rechazo` al ejecutivo en `seed-tipos.json` (+ orden).
-- [ ] `pnpm seed:catalogo` para aplicar.
-- [ ] Smoke del motor: `Inadmite + Rechazar` → etapa terminal + estado CERRADO; `Admitir` → mandamiento.
-- [ ] (Opcional, si se elige ARCHIVADO) mejora del motor para mapear la etapa a `ARCHIVADO`.
+## Tareas
+- [x] Agregar la etapa `archivado_rechazo` al ejecutivo en `seed-tipos.json` (orden 11, terminal).
+- [x] `pnpm seed:catalogo` para aplicar (33 tipos actualizados; ejecutivo con 12 etapas).
+- [x] Smoke del motor: `Inadmite + Rechazar` → `archivado_rechazo` terminal (CERRADO); `Admitir` → sigue.
+- [ ] (Opcional, descartado v1) ARCHIVADO real (mejora transversal del motor) · modelar reposición.
