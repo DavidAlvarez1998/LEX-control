@@ -12,8 +12,10 @@ acota a un set pequeño de alto impacto**. El resto queda parqueado (no descarta
 2. [x] **P1 — Novedades del juzgado en la lista** (IMPLEMENTADO 2026-06-22) · `Proceso.actuacionesNuevas`
    (push) recalculado en el sync + reset en marcar-vistas; `listProcesos +conNovedades`; píldora "N
    nuevas del juzgado" por fila + toggle "Con novedades". tsc + 485 tests + build verdes.
-3. [ ] **P9 — Importar los PDF del expediente** · detalle en `diseno-p9-importar-documentos.md`.
-   La de mayor impacto; 1 campo (`origenRamaIdReg`) + cliente + UI on-demand. (Pendiente — la más grande.)
+3. [x] **P9 — Importar los PDF del expediente** (IMPLEMENTADO 2026-06-22) · cliente obtenerDocumentos/
+   descargarDocumento (+getBuffer); servicio on-demand listar/importar (idempotente por
+   `DocumentoProceso.origenRamaIdReg`, anti-bloqueo); endpoints; panel "Documentos del expediente" en
+   la ficha (listar/seleccionar/importar). tsc + 487 tests + build + smoke real (PDF 384KB). ✅ **Fase A completa.**
 
 ### Fase B — Pulido (IMPLEMENTADA 2026-06-22)
 "Tanda 1" de claridad/confianza:
