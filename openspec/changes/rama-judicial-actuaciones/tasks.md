@@ -33,7 +33,11 @@
 
 ## v2 — asistencia avanzada (PENDIENTE)
 - [ ] Detección de hitos por keywords (§3a del flujo) → sugerir avance de etapa + pre-rellenar fechas
-- [ ] CRON nocturno que recorre todos los procesos con radicado (batching anti-bloqueo §4 del spec)
+- [ ] CRON **2×/día configurable** que recorre todos los procesos con radicado (batching anti-bloqueo §4 del spec)
+      - Default `ACTUALIZAR_PROCESOS_CRON=0 0,12 * * *` (00:00 y 12:00 hora Bogotá). Decisión del usuario:
+        dos corridas — la del mediodía recoge lo que el juzgado publica en horario laboral, así se ve
+        el mismo día sin esperar a la madrugada. Configurable por env: si el run de mediodía da mucho
+        429, se baja a 1×/día sin tocar código.
 - [ ] Notificar novedades (in-app/correo, reusa [[correos-cuenta-invitacion-reset]])
 - [ ] Marcar "nuevas" de forma persistente (last-seen por proceso/usuario), no solo por sesión
 - [ ] Sugerir `juzgado`/`despachoJuzgado` desde la consulta al validar
