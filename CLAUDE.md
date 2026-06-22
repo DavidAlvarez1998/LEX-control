@@ -12,6 +12,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `agents/` is unrelated local agent tooling (engram/gentle-ai) — not part of the application; ignore it for app work.
 
+## Project knowledge / memory
+
+The source of truth for durable knowledge is **`openspec/`** (versioned in the repo): decisions, design, and specs live in `openspec/changes/<feature>/` and are archived into `openspec/specs/`. **When a design/architecture decision is made or changes, update the relevant `openspec/` in the same work** — don't let code and specs drift apart. engram (MCP) and the assistant's file memory are **temporary support only**, not the source of truth. The full convention (the 3 layers and how they scale) lives in **`openspec/convenciones-memoria.md`**.
+
 ## Commands
 
 ### Database (`lex-control-api/`)
