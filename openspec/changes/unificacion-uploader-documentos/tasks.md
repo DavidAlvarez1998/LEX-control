@@ -32,4 +32,12 @@
 - [x] API `vitest` — 485/485 (incluye `seed-tipos.test.ts`); `seed-tipos.json` válido
 - [x] Consumidores verificados: `AdjuntosLibres` (datos-proceso.tsx:317), `DocumentosContrato`
       (cuenta:236, contratos:536, admin contratos-comercial:446) — props compatibles
-- [ ] Smoke en navegador (subir/quitar real en cada punto) — pendiente con la app corriendo
+- [x] Smoke en navegador real (Playwright/Chromium): form crear ejecutivo — pruebas (modo pendiente)
+      sube 2 archivos con chip+tamaño, autocompleta nombre ("Pagare-123", sin ext) y es editable,
+      Quitar funciona; cautelares=Sí despliega "Otras medidas cautelares" + uploader y sube.
+- [x] Smoke modo EN VIVO contra la carpeta real (empresa Bufete Goodman, carpeta tecnovapp ya
+      existente `DEMO-LEXCONTROL/BUFETE-GOODMAN-…_CONTRATOS`): `/cuenta` → subir Titulo.pdf → aparece en
+      la lista con categoría + link "Ver" (URL pública real, GET 200) → "Quitar" + confirmar → desaparece.
+      También e2e por API: POST 201 con `path` real, GET del archivo público 200, DELETE 204.
+      (El 500 previo era por usar un tenant sintético sin carpeta; con la empresa real funciona.)
+      Ficha `AdjuntosLibres` y contratos admin = mismo componente `DocumentosUploader` (no re-clickeados).
