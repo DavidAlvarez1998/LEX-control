@@ -9,10 +9,11 @@ acota a un set pequeño de alto impacto**. El resto queda parqueado (no descarta
 1. [x] **P12 — Preview del radicado al vincular** (IMPLEMENTADO 2026-06-22) · solo front;
    debounce a 23 díg → tarjeta "Encontrado: JUZGADO… · radicó {fecha} + partes" + "Vincular y traer
    datos". `ValidarRadicadoResp +fechaProceso +sujetosProcesales`. tsc+build verdes.
-2. [ ] **P1 — Novedades del juzgado en la lista** · detalle en `diseno-p1-novedades-lista.md`.
-   1 campo denormalizado (`actuacionesNuevas`) + filtro + píldora.
+2. [x] **P1 — Novedades del juzgado en la lista** (IMPLEMENTADO 2026-06-22) · `Proceso.actuacionesNuevas`
+   (push) recalculado en el sync + reset en marcar-vistas; `listProcesos +conNovedades`; píldora "N
+   nuevas del juzgado" por fila + toggle "Con novedades". tsc + 485 tests + build verdes.
 3. [ ] **P9 — Importar los PDF del expediente** · detalle en `diseno-p9-importar-documentos.md`.
-   La de mayor impacto; 1 campo (`origenRamaIdReg`) + cliente + UI on-demand.
+   La de mayor impacto; 1 campo (`origenRamaIdReg`) + cliente + UI on-demand. (Pendiente — la más grande.)
 
 ### Fase B — Pulido (IMPLEMENTADA 2026-06-22)
 "Tanda 1" de claridad/confianza:
