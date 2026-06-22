@@ -6,11 +6,12 @@ acota a un set pequeño de alto impacto**. El resto queda parqueado (no descarta
 ## ✅ Nos quedamos con 3 esenciales + 1 paquete de pulido
 
 ### Fase A — Las 3 que "se sienten" (alto impacto)
-1. **P12 — Preview del radicado al vincular** · *solo front, barata, muy visible* ·
-   detalle en `diseno-p10-p11-p12-...md`. Sin cambios de backend (endpoint ya existe).
-2. **P1 — Novedades del juzgado en la lista** · detalle en `diseno-p1-novedades-lista.md`.
+1. [x] **P12 — Preview del radicado al vincular** (IMPLEMENTADO 2026-06-22) · solo front;
+   debounce a 23 díg → tarjeta "Encontrado: JUZGADO… · radicó {fecha} + partes" + "Vincular y traer
+   datos". `ValidarRadicadoResp +fechaProceso +sujetosProcesales`. tsc+build verdes.
+2. [ ] **P1 — Novedades del juzgado en la lista** · detalle en `diseno-p1-novedades-lista.md`.
    1 campo denormalizado (`actuacionesNuevas`) + filtro + píldora.
-3. **P9 — Importar los PDF del expediente** · detalle en `diseno-p9-importar-documentos.md`.
+3. [ ] **P9 — Importar los PDF del expediente** · detalle en `diseno-p9-importar-documentos.md`.
    La de mayor impacto; 1 campo (`origenRamaIdReg`) + cliente + UI on-demand.
 
 ### Fase B — Pulido (IMPLEMENTADA 2026-06-22)
