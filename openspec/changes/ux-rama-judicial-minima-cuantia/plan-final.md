@@ -26,15 +26,30 @@ acota a un set pequeño de alto impacto**. El resto queda parqueado (no descarta
 - [x] **P13** contador del radicado más visible (text-sm + negrita)
 - [~] **P14** cuantía implícita → **ya estaba resuelto**: el bloque genérico de cuantía ya se oculta
       para el ejecutivo (`!esEjecutivo(tipo)`); su cuantía va por su propio campo. Sin cambios.
-- [ ] **P8** origen del dato ("de la Rama") → **diferido**: requiere un marcador real por-campo
-      (qué campo autollenó el sync); sin él, etiquetar "de la Rama" sería adivinar. Bajo valor.
+- [x] **P8** origen del dato ("de la Rama") → IMPLEMENTADO con marcador `Proceso.camposRamaCsv` (chip
+      "de la Rama" en Despacho/juzgado de la ficha).
 
-Gate: tsc API+client · vitest 485 · build client. Commiteado.
+Gate: tsc API+client · vitest 487 · build client. Commiteado.
 
-## ⏸ Parqueado (no ahora)
-P6 (badge reservado), P10 (importar partes/Sujetos), P11 (card Estado/ubicación), P16 (actualizar
-todos), P4 (actuación→etapa), P15 (docs agrupados), P2 (cockpit), P17 (campanita in-app).
-Todas tienen su diseño listo en este change para retomarlas cuando se quiera.
+## ✅ Parqueadas — TODAS IMPLEMENTADAS 2026-06-22 (salvo P17)
+- [x] **P6** badge reservado/no-publicado (Proceso.ramaEstado) · [x] **P11** card "Estado en el juzgado"
+      (Endpoint Detalle, ubicación) · [x] **P8** chip "de la Rama".
+- [x] **P4** sugerencia de avance inline en el timeline · [x] **P15** chip "del juzgado" en documentos.
+- [x] **P16** "↻ Actualizar con la Rama" en la lista (sincronizarMisProcesos, cap 40, no-sync-6h).
+- [x] **P10** importar partes desde Sujetos (cotejo + crear Litigante/ParteProceso, mapeo de rol).
+- [x] **P2** cockpit "Novedades del juzgado" en /inicio.
+
+## ⏳ PENDIENTE PARA MAÑANA — P17 campanita in-app (versión LIVIANA)
+Decisión del usuario: hacer la **liviana** (no la completa con modelo Notificacion), y dejarla para
+mañana. Spec de la liviana:
+- **Campanita 🔔 en el topbar del cliente** con un **contador** = nº de procesos con `actuacionesNuevas>0`.
+  Reusa lo existente: `listProcesos({ conNovedades: true })` (o un endpoint de conteo liviano
+  `GET /procesos/novedades/contador`). **SIN modelo nuevo, sin migración.**
+- Al hacer clic → navega a `/procesos?conNovedades=1` (o setea el filtro "Con novedades").
+- Refresco: al cargar, al volver el foco a la pestaña, y/o cada ~60s (como el indicador de prospectos).
+- Mirar el patrón de `src/components/prospectos-pendientes.tsx` (pill ámbar en el topbar admin) para calcar.
+- La versión COMPLETA (modelo Notificacion + dropdown + marcar-leídas + historial) queda como follow-up
+  mayor para cuando se quieran notificaciones in-app de verdad (aplicaría a más que procesos).
 
 ## Orden de implementación sugerido
 1. **Fase B (pulido)** primero — barato, da claridad inmediata a lo ya construido.
