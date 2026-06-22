@@ -31,16 +31,42 @@
 - [x] build client verde
 - [x] `pnpm push` (BD in sync; tabla actuaciones_tramite creada)
 
-## v2 — asistencia avanzada (PENDIENTE)
-- [ ] Detección de hitos por keywords (§3a del flujo) → sugerir avance de etapa + pre-rellenar fechas
-- [ ] CRON **2×/día configurable** que recorre todos los procesos con radicado (batching anti-bloqueo §4 del spec)
-      - Default `ACTUALIZAR_PROCESOS_CRON=0 0,12 * * *` (00:00 y 12:00 hora Bogotá). Decisión del usuario:
-        dos corridas — la del mediodía recoge lo que el juzgado publica en horario laboral, así se ve
-        el mismo día sin esperar a la madrugada. Configurable por env: si el run de mediodía da mucho
-        429, se baja a 1×/día sin tocar código.
-- [ ] Notificar novedades (in-app/correo, reusa [[correos-cuenta-invitacion-reset]])
-- [ ] Marcar "nuevas" de forma persistente (last-seen por proceso/usuario), no solo por sesión
-- [ ] Sugerir `juzgado`/`despachoJuzgado` desde la consulta al validar
+## v2 — asistencia avanzada (IMPLEMENTADA · plan en v2-plan.md)
+- [x] **#1 Detección de hitos → SUGERIR avance de etapa (incremento 2)**
+      - `procesos/hitos-actuaciones.ts` (puro): keyword→{etapaKey,campoFecha} con matching difuso
+        (normaliza tildes/mayúsc); solo sugiere si la etapa/campo existen y el campo está vacío. NO auto-avanza.
+      - `sugerenciasDeProceso` + endpoint GET `/:id/actuaciones/sugerencias`.
+      - Ficha: card "Sugerencias de la Rama" con botón "Usar fecha" (pre-llena → dispara auto-avance del motor).
+      - Test `hitos-actuaciones` (5 casos).
+- [x] **#2 Notificar novedades por CORREO (incremento 2)**
+      - `notificaciones/correos-actuaciones.ts` `enviarNovedadActuaciones` (best-effort). Dispara desde el
+        CRON (`sincronizarProceso(_, {notificar:true})`) cuando hay nuevas, al **responsable** del proceso.
+      - Smoke real enviado a adjuan123@gmail.com (enviado=true). Test con enviarCorreo mockeado.
+      - **DIFERIDO:** campanita in-app global (modelo Notificacion + topbar) → follow-up; la señal "no leídas"
+        en la ficha la da el #3.
+- [x] **#3 "Nuevas" persistente (incremento 2)**
+      - Schema `Proceso.actuacionesVistasAt` (push hecho). `listarActuaciones` devuelve `nueva` por ítem
+        (createdAt > vistasAt); POST `/:id/actuaciones/marcar-vistas`. Ficha: badges persistentes + contador
+        + botón "Marcar como vistas". (Simplificación: por-proceso, no por-usuario.)
+- [x] **#4 Autollenar el juzgado si está vacío (incremento 2)**
+      - En `sincronizarProceso`: al llamar al Endpoint A capturamos `despacho` y seteamos `despachoJuzgado`
+        solo si está vacío (no pisa lo escrito por el abogado).
+- [x] **Sincronización masiva + anti-bloqueo (cron) — IMPLEMENTADO (incremento 1)**
+      - Retry + backoff exponencial en `rama-judicial.http.ts` (403/429/5xx/red; env retryAttempts/initial/max;
+        intentos=1 en test).
+      - `actuaciones.service.ts`: core `sincronizarProceso(proceso)` (sin tenant, compartido con on-demand)
+        + `sincronizarTodas()` con lotes (batchSize 8), esperas (delayRequest 1.2s / delayLote 5s) y pausa
+        (45s) tras N errores seguidos; un fallo por proceso NO detiene el barrido. Env: RAMA_JUDICIAL_BATCH_SIZE,
+        _DELAY_REQUEST_MS, _DELAY_LOTE_MS, _MAX_CONSECUTIVE_ERRORS, _PAUSE_ON_ERRORS_MS.
+      - `scripts/sync-actuaciones.ts` — lo ejecuta el **cron del SO** (la API no tiene scheduler propio;
+        evita doble corrida con múltiples instancias).
+      - Test `sincronizarTodas` (tolera fallos, totaliza). Gate: tsc + vitest 477.
+      - **PENDIENTE DEL USUARIO (ops):** crontab 2×/día →
+        `0 0,12 * * * cd /ruta/lex-control-api && pnpm exec tsx scripts/sync-actuaciones.ts`
+        (00:00 y 12:00 Bogotá; mediodía recoge lo publicado en horario laboral). Si el mediodía da mucho 429,
+        se baja a 1×/día sin tocar código.
+- [ ] (follow-up) Campanita in-app global (modelo Notificacion + topbar en ambos portales)
+- [ ] (follow-up) "Nuevas" por-usuario (hoy es por-proceso)
 
 ## Correcciones legales detectadas (ver validacion-ley-y-realidad.md) — decisión del usuario
 - [ ] A6: separar plazo del mandamiento (pagar 5 días art.431 vs excepciones 10 días art.442)
