@@ -1,5 +1,25 @@
 # Ejecutivo de mínima cuantía — FLUJO COMPLETO (consolidado · v2 perfeccionada)
 
+> ✅ **APLICADO + VERIFICADO 2026-06-20** (sin commit). Gate: tsc + 459 tests + 4
+> flujos del motor simulados + render de las 6 plantillas (0 faltas inesperadas).
+> Implementado: schema `Usuario +cedula +tarjetaProfesional` / `Litigante
+> +direccion +ciudad` (`pnpm push`); `construirContexto` expone `proceso.responsable.*`
+> y `parte.*.{direccion,ciudad}`; `findProcesoConPartes` carga responsable; seed del
+> tipo (50 campos, 11 etapas con condicionales) re-seedeado; 6 plantillas en
+> `plantillas-seed.ts` (nombres = slot: demanda.pdf/poder.pdf/solicitud-cautelares.pdf/
+> memorial.pdf/acuerdo-pago.pdf/solicitud-terminacion.pdf).
+>
+> **Desviaciones pragmáticas (forzadas por el motor/formulario):**
+> 1. **Cautelares:** el multiselect vacío hacía que el motor NO saltara `notifCautelares`
+>    (campo vacío = "decisión pendiente"). Se reemplazó por un select **`solicitaCautelares`
+>    (Sí/No)** que gatea la etapa (robusto) + booleans `embargoSalarios`/`embargoCuentas`
+>    para los `{{#if}}` de la plantilla + `otrasCautelares` (texto) para las demás medidas.
+>    (Supera la decisión #2 "multiselect de 7": el form no podía condicionar el `{{#if}}`
+>    por opción ni el motor saltar con el multiselect vacío.)
+> 2. **Listas:** el formulario no tiene tipo "lista"/"tabla" → `hechos`, `pretensiones`,
+>    `pruebas` y el `cronograma` de cuotas van como **`textoLargo`** (la plantilla los
+>    inserta como texto, sin `{{#each}}`). Tipos de campo array = feature aparte.
+
 > Integra la guía de 9 pasos (`Proceso_Ejecutivo_Minima_Cuantia.docx`) + los 6
 > modelos de escrito, **revisado documento por documento** contra el seed real
 > (`seed-tipos.json`, tipo "Proceso ejecutivo de mínima cuantía", 8 etapas) y el
@@ -13,6 +33,29 @@
 > ⚠️ Esta es la fuente de verdad del flujo. `proposal.md` (9 etapas) queda
 > **superado** por este documento (8 etapas: acuerdo y desistimiento son *motivos
 > de `terminacion`*, no etapas). Ver la tabla de trazabilidad al final.
+
+## Decisiones finales (cerradas con el usuario · 2026-06-20)
+
+1. **Poder:** usar el modelo de ejemplo tal cual (poder general/administrativo) para
+   la plantilla. (Nota: no es un poder judicial; queda así por decisión del usuario.)
+2. **Cautelares:** se mantienen las 7 opciones del multiselect (medidas reales),
+   pero la plantilla `solicitud-cautelares.pdf` solo **redacta salarios + cuentas**
+   (las que tienen modelo); otras medidas seleccionadas se marcan para redacción manual.
+3. **Audiencia art. 392:** se modela como **etapa propia** `audiencia`
+   (`disponibleSi: contesto = Sí`), no como campos dentro de `mandamientoPago`.
+4. **Remate:** **etapas dedicadas** `liquidacionCredito` (art. 446) + `avaluoRemate`
+   (arts. 444–457), condicionales a la vía de remate.
+5. **Desistimiento tácito (317):** solo **motivo de cierre** en `terminacion`; v1
+   NO enforza el plazo de inactividad (decisión consciente; se puede agregar luego).
+6. **Cita legal de cautelares:** **literal/fiel al doc** (se conserva la mención al
+   CPC art. 531 del modelo, aunque esté derogado).
+7. **Única instancia:** se documenta como **nota** del tipo (mínima cuantía =
+   única instancia, juez civil municipal); la UI no ofrece apelación/2ª instancia.
+
+**Estructura resultante (~11 etapas, varias condicionales):**
+`radicacion → radicacionJuzgado → calificacion → [subsanacion si inadmite] →
+[notifCautelares si hay cautelares] → mandamientoPago → [audiencia si contesta] →
+impulsos → [liquidacionCredito + avaluoRemate si vía remate] → terminacion (terminal)`.
 
 ## Convenciones
 
