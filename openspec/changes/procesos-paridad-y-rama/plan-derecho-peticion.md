@@ -1,5 +1,14 @@
 # Plan — Derecho de Petición (enviado y recibido)
 
+> ⛔ **FUERA DE ALCANCE de esta tarea** (decisión del usuario, 2026-06-23). El DdP no es
+> judicial → no consume la Rama. La auditoría de abajo queda como **referencia** para una
+> tarea futura; no se implementa nada acá. Pendientes detectados (no resueltos): dos fechas
+> casi iguales (`fechaRadicado` huérfano vs `fechaRadicacion`, que dispara el plazo); el
+> `escala_tutela` nace casi vacío y necesitaría un mapeo de llaves (DdP→tutela) en el motor
+> de derivación; y la notificación de vencimiento (feature aparte). El DdP es
+> **estructuralmente sano** (sin keys duplicadas ni referencias rotas).
+
+
 > SDD por caso · paraguas: [proposal.md](proposal.md) · doc fuente:
 > `roadmap-docs/DERECHO DE PETICIÓN - JUAN DAVID.docx`
 > análisis previo: `openspec/changes/flujos-constitucional-peticion/{fuente-juan-david.txt,comparacion,proposal}.md`

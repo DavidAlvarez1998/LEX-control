@@ -29,7 +29,7 @@ Alcance (los que tienen doc, sin contar el de referencia ya hecho):
 | Proceso verbal | `JURISDICCIÓN ORDINARIO CIVIL- PROCESO VERBAL.docx` | Sí (radicado CPNU) | [plan-verbal.md](plan-verbal.md) |
 | Proceso verbal sumario | `…- PROCESO VERBAL SUMARIO.docx` | Sí | [plan-verbal-sumario.md](plan-verbal-sumario.md) |
 | Proceso Laboral | `PROCEDIMIENTO LABORAL - CORREGIDO 15 DE JUNIO.docx` | Sí | [plan-laboral.md](plan-laboral.md) |
-| Derecho de Petición (env./recibido) | `DERECHO DE PETICIÓN - JUAN DAVID.docx` | **No** (no judicial) | [plan-derecho-peticion.md](plan-derecho-peticion.md) |
+| Derecho de Petición (env./recibido) | `DERECHO DE PETICIÓN - JUAN DAVID.docx` | **No** (no judicial) | ⛔ **FUERA DE ALCANCE** (decisión del usuario, 2026-06-23) — ver [plan-derecho-peticion.md](plan-derecho-peticion.md) |
 
 ## Hallazgo transversal: por qué el botón de la Rama hoy solo sale en mínima cuantía
 
