@@ -46,12 +46,25 @@ header `RadicadoDato` de la ficha y/o el bloque "Radicación" de la creación �
 `proceso.despachoJuzgado` + el campo `fechaRadicacion`. (No tiene sentido inyectarlo dentro
 de `seccionesLaboral`, porque ahí el radicado no es un campo.)
 
-## Tareas
+## Tareas — estado (2026-06-23)
 
-1. **Decidir** A vs. B (paraguas). Asumiendo B + ubicación en `RadicadoDato`/creación.
-2. **Limpiar** los campos de reconvención muertos (o modelar etapas) — cerrar la decisión.
-3. **Confirmar** el alcance de 2ª instancia vs. el doc (extensión aceptada) y registrarlo.
-4. **Enganchar la Rama** en el punto de edición del radicado del laboral: autollenar
-   `despachoJuzgado` (columna) + `fechaRadicacion` (campo) desde `validarRadicado`.
-5. **Verificar** los 4 flujos (rol × instancia) + 2ª instancia, y que demandado/única salte
-   admisión sin colgarse; smoke del autollenado.
+Auditoría: **sin campos duplicados, sin referencias rotas** (54 campos).
+
+1. ✅ **Rama (Opción B)** — la ficha ya tenía el botón por el encabezado `RadicadoDato`
+   (laboral no tiene campo `radicado` en el esquema → el gate `!tiene("radicado")` lo
+   muestra). Se agregó además el botón al **form de creación** (bloque "Radicación"):
+   rellena juzgado y agrega la contraparte como sujeto procesal, igual que los verbales.
+2. ❌➡️✅ **"Reconvención muerta": era falso.** El sub-flujo de reconvención **sí está
+   modelado y vivo**: cadena `mostrarSi` completa (`hayReconvencion` solo en doble instancia
+   → `decisionReconvencion` → subsanación → notificación → contestación → silencio) y sus
+   **documentos anclados** en la etapa `contestacion` vía `opcionalesSi` (reconvencion.pdf,
+   auto-reconvencion.pdf, subsanacion-reconvencion.pdf, …). No se elimina nada.
+3. ➖ **2ª instancia**: presente (remision→sustentacion→audiencia→sentencia); es extensión
+   sobre el .docx del 15-jun (aceptada). Registrado; sin cambios.
+4. ✅ **Autollenado**: el botón del encabezado (sincronizarActuaciones) llena
+   `despachoJuzgado` (columna) y `fechaRadicacion` (campo, si rol=Demandante); el de creación
+   llena juzgado + contraparte.
+5. ✅ **Verificado**: `createProceso` de laboral crea OK; flujos laborales con tests verdes.
+
+**Conclusión:** el laboral **no requiere limpieza de seed** (la "reconvención muerta" no
+existía). Solo se sumó el botón de la Rama en creación. Pendiente smoke en vivo.
