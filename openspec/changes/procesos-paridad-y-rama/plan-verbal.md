@@ -43,14 +43,25 @@ radicado de la columna canónica y escriba el despacho a `juzgado` (campo) + col
 fecha a `fechaRadicacion` si se decide exponerla. `validarRadicado(23díg)` ya devuelve
 `{despacho, fechaProceso}`.
 
-## Tareas
+## Tareas — estado (2026-06-23)
 
-1. **Decidir** A vs. B (paraguas). Asumiendo B.
-2. **Unificar juzgado**: resolver `proceso.despachoJuzgado` (columna) vs. `juzgado` (campo
-   esquema) — una sola fuente; el autollenado escribe ahí.
-3. **Generalizar el botón** para verbal: leer radicado de `proceso.radicado`, autollenar
-   juzgado (+ fecha si se modela). Reusar el `RadicadoDato` que ya consulta la Rama.
-4. **Condicional de montos** (`tipoPretension` → `montoPretensiones`/`montoTotal`) si falta.
-5. **Recursos**: validar ruteo apelación→2ª instancia vs. los demás→mismo despacho.
-6. **Verificar** sin regresiones en mínima cuantía; smoke: pegar radicado real → juzgado/
-   fecha llegan de la Rama; simular admite/inadmite/subsana/recurso/2ª instancia.
+El verbal estaba **más sano de lo previsto**. Auditoría: sin campos duplicados, sin
+referencias rotas en `mostrarSi`/etapas (144 campos, todo consistente).
+
+1. ✅ **Rama (Opción B)** — cubierto por el trabajo transversal: `radicadoJudicial→radicado`
+   (espejo refleja a la columna), botón "Actualizar con la Rama" en el formulario de etapa y
+   en el de creación, y la contraparte se agrega como sujeto procesal. Verbal es grupo
+   JUDICIAL con `radicado`+`juzgado` → todo aplica igual que al sumario.
+2. ✅ **Unificar juzgado** — `espejoColumnasDesdeDatos` ya refleja el campo `juzgado` → columna
+   `proceso.despachoJuzgado`. Una sola fuente efectiva.
+3. ✅ **Condicional de montos** — ya estaba: `montoPretensiones`/`montoTotal` con
+   `mostrarSi: tipoPretension == "Determinadas"`. Nada que cambiar.
+4. ✅ **Ruteo de recursos** — ya estaba correcto: `segunda_instancia` exige
+   `recursoTipo == "Apelación"` + `apConcedido == "Sí"`; `recurso_mismo_despacho` exige los
+   otros 4 (Aclaración/Corrección/Adición/Reposición). Fiel al CGP.
+5. ✅ **Verificado** — `createProceso` de un verbal crea OK (incluye el fix del bug de
+   `cuantia` categoría → Decimal); 12/12 tests de flujos verbales verdes; reconvención del
+   verbal **intacta** (sí aplica, a diferencia del sumario).
+
+**Conclusión:** el verbal no requiere cambios de seed; queda al estándar de la mínima cuantía
+con la Rama integrada. Pendiente solo el smoke en vivo (pegar radicado real en la UI).
