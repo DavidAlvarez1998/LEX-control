@@ -36,10 +36,16 @@ la columna canónica + autollenar `juzgado` (resolviendo el `radicadoJudicial` v
 
 ## Tareas
 
-1. **Decidir** A vs. B (paraguas). Asumiendo B.
-2. **Ocultar reconvención** (no aplica a sumario).
-3. **Anclar** `acta-audiencia.pdf` en `audienciaUnica`.
-4. **Normalizar** la fuente del radicado/juzgado (columna canónica vs. `radicadoJudicial`/
-   `juzgado`) y generalizar el botón "Actualizar" como en verbal.
-5. **Verificar**: única instancia (sin recurso de apelación), audiencia única gateada por
-   `sentenciaAnticipada`, autollenado de juzgado desde la Rama; smoke de flujo completo.
+1. ✅ **Botón Rama** — resuelto vía Opción B (encabezado `RadicadoDato`); ya funciona en sumario.
+2. ✅ **Quitar reconvención** (art. 392 la prohíbe) — **HECHO** (2026-06-23): eliminados los 7
+   campos `hayReconvencion`/`recon*` del esquema (104→97 campos), renombrada la etapa
+   `contestacion` "Contestación y reconvención" → "Contestación" y removido el
+   `opcionalesSi` de `reconvencion.pdf`. Aplicado a la DB (esquemaVersion++); 12/12 tests de
+   flujos verbales verdes; verbal **no** se tocó (conserva su reconvención).
+3. ✅ **Acta de audiencia** — ya estaba anclada: la etapa `audienciaUnica` tiene
+   `acta-audiencia-unica.pdf`. Sin cambios.
+4. ⏳ **Normalizar `radicadoJudicial`** (campo del esquema) vs. la columna canónica
+   `proceso.radicado` — **diferido**: la Opción B hizo el botón independiente de esa llave,
+   así que es limpieza no bloqueante (baja prioridad; riesgo de datos).
+5. ✅ **Verificado**: única instancia, audiencia única gateada por `sentenciaAnticipada`,
+   conciliación total → terminal, rechazo → archivo (tests).
