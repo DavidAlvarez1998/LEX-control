@@ -68,3 +68,14 @@ Auditoría: **sin campos duplicados, sin referencias rotas** (54 campos).
 
 **Conclusión:** el laboral **no requiere limpieza de seed** (la "reconvención muerta" no
 existía). Solo se sumó el botón de la Rama en creación. Pendiente smoke en vivo.
+
+### Addendum (2026-06-23): radicado/juzgado en la ficha
+
+El laboral no tenía `radicado` ni `juzgado` como campos del esquema (solo columnas), así que
+en la **ficha** no aparecía el radicado (sí en el form de crear). Se agregaron ambos
+(`soloFicha: true`) junto a "Fecha de radicación de la demanda". Efectos: el formulario de la
+ficha ya muestra/edita radicado+juzgado; el botón "Actualizar con la Rama" pasa del encabezado
+al **formulario de etapa** (gate `radicado`+`juzgado`, el del encabezado se apaga con
+`mostrarActualizar=!tiene("radicado")`); el `createProceso` refleja `body.radicado`/
+`despachoJuzgado` → `datos` (mirror ya existente). Migrados los procesos laborales existentes
+(columna → datos). 498/498 tests.
