@@ -31,7 +31,7 @@ acota a un set pequeño de alto impacto**. El resto queda parqueado (no descarta
 
 Gate: tsc API+client · vitest 487 · build client. Commiteado.
 
-## ✅ Parqueadas — TODAS IMPLEMENTADAS 2026-06-22 (salvo P17)
+## ✅ Parqueadas — TODAS IMPLEMENTADAS (P6/P11/P8/P4/P15/P16/P10/P2 el 2026-06-22; P17 el 2026-06-23)
 - [x] **P6** badge reservado/no-publicado (Proceso.ramaEstado) · [x] **P11** card "Estado en el juzgado"
       (Endpoint Detalle, ubicación) · [x] **P8** chip "de la Rama".
 - [x] **P4** sugerencia de avance inline en el timeline · [x] **P15** chip "del juzgado" en documentos.
@@ -39,15 +39,17 @@ Gate: tsc API+client · vitest 487 · build client. Commiteado.
 - [x] **P10** importar partes desde Sujetos (cotejo + crear Litigante/ParteProceso, mapeo de rol).
 - [x] **P2** cockpit "Novedades del juzgado" en /inicio.
 
-## ⏳ PENDIENTE PARA MAÑANA — P17 campanita in-app (versión LIVIANA)
-Decisión del usuario: hacer la **liviana** (no la completa con modelo Notificacion), y dejarla para
-mañana. Spec de la liviana:
-- **Campanita 🔔 en el topbar del cliente** con un **contador** = nº de procesos con `actuacionesNuevas>0`.
-  Reusa lo existente: `listProcesos({ conNovedades: true })` (o un endpoint de conteo liviano
-  `GET /procesos/novedades/contador`). **SIN modelo nuevo, sin migración.**
-- Al hacer clic → navega a `/procesos?conNovedades=1` (o setea el filtro "Con novedades").
-- Refresco: al cargar, al volver el foco a la pestaña, y/o cada ~60s (como el indicador de prospectos).
-- Mirar el patrón de `src/components/prospectos-pendientes.tsx` (pill ámbar en el topbar admin) para calcar.
+## ✅ P17 campanita in-app (versión LIVIANA) — IMPLEMENTADA 2026-06-23
+Decisión del usuario: hacer la **liviana** (no la completa con modelo Notificacion). Implementado:
+- **Campanita 🔔 en el topbar del cliente** (`src/components/novedades-campana.tsx`, montada en
+  `src/components/topbar.tsx`) con un **badge** = `total` de `listProcesos({ conNovedades: true })`
+  (= procesos con `actuacionesNuevas>0`). **SIN modelo nuevo, sin migración** — reusa el endpoint existente.
+- Solo visible para **JURIDICO** (o admin de empresa); calca el guard de `inicio` (`esAdminEmpresa || roles.includes("JURIDICO")`).
+- Clic → `/procesos?conNovedades=1`. El page de procesos ahora inicializa `conNovedades` desde la URL,
+  así el deep-link llega con el filtro puesto.
+- Refresco: al cargar, al volver el foco a la pestaña y cada 60s (calca `prospectos-pendientes.tsx`).
+- Gate: build del cliente verde. (El único lint que toca el componente es el `setState`-en-effect que
+  también tiene el componente de referencia — patrón establecido para leer `localStorage` solo en cliente.)
 - La versión COMPLETA (modelo Notificacion + dropdown + marcar-leídas + historial) queda como follow-up
   mayor para cuando se quieran notificaciones in-app de verdad (aplicaría a más que procesos).
 
