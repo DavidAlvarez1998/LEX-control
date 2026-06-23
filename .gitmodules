@@ -1,9 +1,9 @@
 [submodule "lex-control-api"]
 	path = lex-control-api
-	url = https://github.com/DavidAlvarez1998/lex-control-api.git
+	url = https://github.com/DavidAlvarez1998/LEX-control-api.git
 [submodule "lex-control-admin"]
 	path = lex-control-admin
-	url = https://github.com/DavidAlvarez1998/lex-control-admin.git
+	url = https://github.com/DavidAlvarez1998/LEX-control-admin.git
 [submodule "lex-control-client"]
 	path = lex-control-client
-	url = https://github.com/DavidAlvarez1998/lex-control-client.git
+	url = https://github.com/DavidAlvarez1998/LEX-control-client.git
