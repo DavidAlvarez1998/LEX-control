@@ -44,8 +44,13 @@ la columna canónica + autollenar `juzgado` (resolviendo el `radicadoJudicial` v
    flujos verbales verdes; verbal **no** se tocó (conserva su reconvención).
 3. ✅ **Acta de audiencia** — ya estaba anclada: la etapa `audienciaUnica` tiene
    `acta-audiencia-unica.pdf`. Sin cambios.
-4. ⏳ **Normalizar `radicadoJudicial`** (campo del esquema) vs. la columna canónica
-   `proceso.radicado` — **diferido**: la Opción B hizo el botón independiente de esa llave,
-   así que es limpieza no bloqueante (baja prioridad; riesgo de datos).
+4. ✅ **Normalizar `radicadoJudicial` → `radicado`** — **HECHO** (2026-06-23): el campo se
+   llamaba `radicadoJudicial`, que `espejoColumnasDesdeDatos` NO refleja a la columna
+   `proceso.radicado` (solo refleja la llave `radicado`), así que el radicado del form
+   quedaba desconectado de la Rama y el usuario veía "no trae nada". Renombrado a `radicado`
+   (igual que mínima cuantía) en verbal **y** sumario (campo + etapa `radicacion`), migrados
+   los procesos existentes (datos + columna), y el botón "Actualizar con la Rama" del
+   formulario de etapa ahora aparece bajo "Radicado judicial" (gate relajado a `radicado` +
+   `juzgado`, sin exigir `fechaRadicacion`). El del encabezado se apaga solo. 498/498 tests.
 5. ✅ **Verificado**: única instancia, audiencia única gateada por `sentenciaAnticipada`,
    conciliación total → terminal, rechazo → archivo (tests).
