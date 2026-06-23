@@ -56,3 +56,29 @@
 
 - **SMS:** `573XXXXXXXXX` (indicativo país, sin `+`).
 - **Llamada:** acepta `3XXXXXXXXX` / `573XXXXXXXXX` / `+57...` (Go4 normaliza).
+
+## Pendiente — ADJUNTOS en el correo (bloquea "Notificar al demandado")
+
+> Solicitado 2026-06-23. Caso de uso: en la ficha del **proceso ejecutivo de
+> mínima cuantía**, etapa "Mandamiento de pago", un botón **"Notificar"** que envíe
+> a **cada demandado** (Litigante con correo) un correo con **el mandamiento de pago
+> y la constancia de notificación adjuntos**.
+
+**BLOQUEO:** el canal de correo (`enviarCorreo`) y el microservicio solo aceptan
+`{ to, subject, html }` (`POST /email/enviar`) — **NO soporta adjuntos**. Por eso el
+botón no se puede implementar como "correo con archivos adjuntos" hoy.
+
+**Caminos:**
+1. **Pedir adjuntos al microservicio** (decisión del usuario 2026-06-23): que Finova/
+   solucredito agregue soporte de adjuntos (raw MIME / multipart) a `/email/enviar`.
+   Cuando exista, `enviarCorreo` gana un parámetro `adjuntos[]` y se construye el botón.
+2. Alternativa no elegida: enviar **enlaces** a los PDFs (tecnovapp) en el HTML — pero
+   hay que verificar que un externo pueda abrir el link sin login (tecnovapp protege).
+
+**Notas para cuando se implemente:**
+- A quién: partes con `rol = Demandado` que tengan `email`/`correos` (Litigante).
+- Qué adjuntar: `mandamiento-pago.pdf` (único) + las `Notificación: *` (multi, ya se
+  suben en la ficha, ancladas a `fechaNotificacion`).
+- **Legal:** un correo NO es notificación judicial formal (art. 430 CGP la surte el
+  juzgado: personal/aviso). El correo debe aclararlo; es envío de gestión/cortesía.
+- **De cobro:** cada correo cuesta (cuenta SES del proveedor).
