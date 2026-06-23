@@ -91,6 +91,22 @@ transition, not on save).
 - WHEN the form is submitted
 - THEN validation passes (the hidden field is excluded)
 
+### Requirement: Submit scrolls to the first invalid field
+When the creation form (`/procesos/nuevo`, the single generic wizard reused by every type —
+judicial, laboral, petición/DdP, tutela…) is submitted via **Crear proceso** and validation fails,
+it MUST scroll to and focus the **first invalid field in DOM order** instead of only showing the
+bottom error banner. Each obligatory control — `titulo`, `clienteId`, `responsableId`, every dynamic
+schema field, and the required-documents block (`__docs`) — MUST carry a `data-campo` anchor so the
+submit handler can pick the first one whose key is in the missing set, `scrollIntoView` it
+(`block: "center"`), and focus its inner `input/select/textarea/button`. The scroll MUST run after the
+error state has rendered (the dynamic fields' red marks rely on it). This is presentation only — it
+does not change `validarDatos` or which fields are required.
+
+#### Scenario: Missing required field scrolls into view
+- GIVEN the creation form with an empty required field above the fold the user has scrolled past
+- WHEN the user clicks **Crear proceso**
+- THEN the page smooth-scrolls to that field, centers it, and focuses its control
+
 ### Requirement: Stage transitions — rule-gated, branched, terminal
 Transitioning a `Proceso` to a target stage MUST satisfy that stage's effective `reglas` (all
 `camposRequeridos` present in `datos`, all `documentosRequeridos` attached/generated, including those
