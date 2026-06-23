@@ -82,3 +82,10 @@ botón no se puede implementar como "correo con archivos adjuntos" hoy.
 - **Legal:** un correo NO es notificación judicial formal (art. 430 CGP la surte el
   juzgado: personal/aviso). El correo debe aclararlo; es envío de gestión/cortesía.
 - **De cobro:** cada correo cuesta (cuenta SES del proveedor).
+
+> **CANCELADO 2026-06-23:** el botón "Notificar" del ejecutivo se descarta. Aclaración
+> del usuario: la notificación del mandamiento le llega al correo del demandado y del
+> demandante **por la vía judicial** — el sistema **no** envía notificaciones a nadie.
+> En la ficha solo se **adjunta la constancia** de notificación al expediente (uploader
+> "Notificaciones al demandado", multi-archivo). Queda sin efecto la dependencia de
+> adjuntos en el microservicio para este caso de uso.
