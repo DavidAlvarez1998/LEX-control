@@ -162,6 +162,12 @@ identificacion, esEmplazado, cant }], paginacion }`.
 ### Endpoint E — Documentos del expediente  `GET /Proceso/Documentos/{idProceso}`  → 200
 Array de `{ idRegDocumento, idConexion, consActuacion, nombre, descripcion, tipo, fechaCarga }`
 (en el caso de prueba, 7 documentos).
+> **GOTCHA:** cuando un proceso VÁLIDO aún **no tiene documentos publicados**, este
+> endpoint devuelve **404** (no una lista vacía). El client lo trata como "sin
+> documentos" (lista vacía, `getJson(..., { on404Null: true })`), NO como error —
+> así la ficha muestra "El expediente no tiene documentos publicados" en vez de
+> "No se pudieron consultar los documentos". Verificado en vivo (idProceso 3281956241:
+> actuaciones OK, documentos 404).
 
 ### Endpoint F — DESCARGA del documento  `GET /Descarga/Documento/{idRegDocumento}`  → 200
 Devuelve el **PDF real** (`application/pdf`; verificado: 384 KB, 2 páginas, cabecera `%PDF-`).
