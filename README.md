@@ -1,8 +1,12 @@
 # LEX Control
 
-Plataforma multi-tenant para bufetes de abogados: gestiona empresas cliente, el
-catálogo de servicios y la facturación. Se compone de **3 proyectos** + un repo
-paraguas que los agrupa con git submodules.
+Plataforma multi-tenant de gestión para bufetes de abogados. Cubre la operación de
+punta a punta: cartera de **clientes y CRM comercial**, **procesos legales** por
+jurisdicción (civil, laboral, constitucional/tutela, derecho de petición…) con
+catálogo data-driven y motor de documentos, **agenda**, **facturación**, **contable**
+y **contratos**, además de integraciones externas (Rama Judicial, notificaciones,
+documental). Se compone de **3 proyectos** + un repo paraguas que los agrupa con git
+submodules.
 
 ```
 ┌──────────────────────┐      ┌──────────────────────┐
@@ -30,6 +34,46 @@ org/
 ├─ lex-control-client   ← portal del cliente (Next.js)
 └─ lex-control          ← este repo (paraguas): submodules + docs + compose
 ```
+
+## Módulos
+
+Lo que hace cada portal (la barra lateral es la guía). El detalle de diseño de cada
+módulo vive en `openspec/` (ver más abajo).
+
+**Admin (`:3000`, rol ADMIN de plataforma):**
+
+| Módulo | Qué hace |
+|--------|----------|
+| Empresas | Despachos cliente (tenants): alta, datos, activación |
+| Servicios | Catálogo global de servicios y precio base |
+| Planes | Planes de suscripción y asignación a despachos |
+| Catálogo de procesos | Tipos de proceso data-driven por jurisdicción (campos + flujo + plantillas) |
+| Facturación | Facturas e ítems a despachos |
+| API | Estado/documentación de la API |
+| Usuarios | Usuarios de plataforma y roles |
+| Comercial | CRM: funnel, prospectos, comisiones |
+| Agenda | Calendario de actividades |
+
+**Client (`:3001`, usuarios CLIENTE del despacho):**
+
+| Módulo | Qué hace |
+|--------|----------|
+| Clientes | Cartera de clientes del despacho (CRM) |
+| Procesos | Procesos legales: ficha por etapa, documentos, integración Rama Judicial |
+| Agenda | Vencimientos y actividades |
+| Servicios | Servicios contratados |
+| Contable | Ingresos/egresos/nómina/caja/cartera |
+| Facturación | Facturas del despacho |
+| Contratos | Contratos (RR. HH.) |
+| Equipo | Gestión del equipo del despacho |
+| Mi Cuenta | Perfil del usuario |
+
+## Documentación / source of truth
+
+El diseño, las decisiones y las specs viven en **`openspec/`** (versionado en el repo):
+las propuestas en `openspec/changes/<feature>/` y las specs estables en
+`openspec/specs/`. Es la fuente de verdad — cuando el código cambia, ahí se actualiza.
+Convención completa en `openspec/convenciones-memoria.md`.
 
 ## Requisitos
 
@@ -97,6 +141,80 @@ cd lex-control-client  && pnpm dev    # client→ http://localhost:3001
 ```
 
 Abrí `http://localhost:3000`, te redirige a `/login`, entrás con el ADMIN sembrado.
+
+## Con Docker
+
+Dos stacks de Compose en la raíz del paraguas (ver `openspec/changes/ops-docker/`).
+
+### Dev — todo con un comando
+
+Levanta `api` + `admin` + `client` con hot-reload (bind-mount del código,
+`tsx watch` / `next dev`). **No hay contenedor de MySQL:** el API se conecta a la
+**base real** vía `DATABASE_URL` de `lex-control-api/.env` — igual que `pnpm dev`
+sin Docker, así que ves todos tus usuarios y datos reales.
+
+```bash
+docker compose -f docker-compose.dev.yml up -d     # primer arranque instala deps (lento una vez)
+docker compose -f docker-compose.dev.yml ps        # ver estado | logs -f api para seguir un servicio
+docker compose -f docker-compose.dev.yml down      # bajar (down -v también borra los volúmenes de deps)
+```
+
+Puertos: admin `:3000`, client `:3001`, api `:4000`. Los cambios de código se
+reflejan en caliente (no hace falta reconstruir ni reiniciar).
+
+> ⚠️ Como dev apunta a la **base real**, **no corras `pnpm push`/`pnpm migrate`**
+> desde el contenedor salvo que quieras modificar (o resetear, en el caso de
+> `migrate`) esa base. Entrá con tus usuarios reales y su contraseña de siempre.
+
+**Store de pnpm compartido:** los 3 contenedores comparten un único store (volumen
+`pnpm-store`, vía `npm_config_store_dir=/pnpm-store`) → cada paquete se descarga una
+sola vez y el store no se escribe dentro de los proyectos. Configurado solo en el
+compose de la raíz; los submódulos no se tocan.
+
+> Si querés una base **aislada de juguete** en lugar de la real (pruebas/CI), se
+> puede agregar un servicio `mysql` al compose y apuntarle `DATABASE_URL` —
+> ahí sí `pnpm push` + `pnpm seed:admin` para sembrarla. Ver `openspec/changes/ops-docker`.
+
+### Prod — imágenes construidas
+
+Imágenes multi-stage (API: `tsc` → `node dist/server.js`; fronts: Next.js
+`output: "standalone"`), no-root, con `tini` y healthchecks. **Sin** contenedor de
+MySQL: el API apunta a la BD externa vía `DATABASE_URL` (en `lex-control-api/.env`).
+
+```bash
+docker compose up -d --build          # usa docker-compose.yml (prod) por defecto
+```
+
+> **No auto-migra.** La BD se maneja con `pnpm push`, nunca `prisma migrate dev`
+> (resetea la BD). Aplicá cambios de esquema a mano contra la BD destino.
+
+> **Gotcha Next:** `rewrites()` se evalúa en build, así que `API_PROXY_TARGET` queda
+> horneado en la imagen. En prod se pasa como build arg (`http://api:4000`).
+
+### `.env.example` (no se pudieron commitear por el bloqueo de `.env*`)
+
+El repo bloquea la escritura de cualquier `.env*`. Creá estos archivos a mano
+(`.gitignore` permite `!.env.example`):
+
+**`lex-control-api/.env.example`**
+```bash
+DATABASE_URL="mysql://user:password@host:3306/LEX"
+JWT_SECRET="change-me-to-a-long-random-string"   # requerido (el server sale si falta)
+PORT=4000
+NODE_ENV=development
+CORS_ORIGINS="http://localhost:3000,http://localhost:3001"
+CLIENT_URL="http://localhost:3001"
+ADMIN_URL="http://localhost:3000"
+# Externos (opcionales, defaults en config/env.ts):
+# DOCUMENTOS_API_URL, DOCUMENTOS_RAIZ_PREFIJO, NOTIFICAR_API_URL, RAMA_JUDICIAL_URL
+```
+
+**`lex-control-admin/.env.example`** y **`lex-control-client/.env.example`**
+```bash
+# Target del proxy /api/* (next.config.ts). En Docker = http://api:4000.
+# OJO: con `next build` queda horneado (pasalo como build arg).
+API_PROXY_TARGET=http://localhost:4000
+```
 
 ## Scripts del API (`lex-control-api`)
 
