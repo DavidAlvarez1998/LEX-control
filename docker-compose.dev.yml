@@ -1,0 +1,83 @@
+# LEX Control — DEV stack. One command to run the whole platform locally:
+#   docker compose -f docker-compose.dev.yml up
+#
+# Uses the plain node image with the source bind-mounted and the project's own dev
+# tooling (tsx watch / next dev) for hot reload — no image build needed for dev.
+# The API connects to the EXTERNAL/real database via DATABASE_URL from
+# lex-control-api/.env (no MySQL container) — so all real users/data are available.
+#
+# pnpm store: a single shared volume (pnpm-store) mounted in all three services and
+# forced via `--store-dir=/pnpm-store`. This keeps the store OUT of the bind-mounted
+# project dirs (otherwise pnpm falls back to ./app/.pnpm-store inside each submodule)
+# and downloads each package once for the whole stack. All three images are Alpine
+# (musl), so sharing one store between them is safe.
+name: lex-control-dev
+
+services:
+  api:
+    image: node:22-alpine
+    working_dir: /app
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@9 --activate &&
+             pnpm install --store-dir=/pnpm-store && pnpm generate && pnpm dev"
+    env_file:
+      # Provides the real DATABASE_URL (external DB) + JWT_SECRET + everything else.
+      - ./lex-control-api/.env
+    environment:
+      NODE_ENV: development
+      PORT: "4000"
+      # Force the pnpm store to the shared volume for EVERY pnpm command (not just
+      # install), so it never falls back to /app/.pnpm-store inside the project dir.
+      npm_config_store_dir: /pnpm-store
+    volumes:
+      - ./lex-control-api:/app
+      - lex-api-node-modules:/app/node_modules
+      - pnpm-store:/pnpm-store
+    ports:
+      - "4000:4000"
+
+  admin:
+    image: node:22-alpine
+    working_dir: /app
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@9 --activate &&
+             pnpm install --store-dir=/pnpm-store && pnpm dev"
+    environment:
+      API_PROXY_TARGET: http://api:4000
+      npm_config_store_dir: /pnpm-store
+    volumes:
+      - ./lex-control-admin:/app
+      - lex-admin-node-modules:/app/node_modules
+      - lex-admin-next:/app/.next
+      - pnpm-store:/pnpm-store
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  client:
+    image: node:22-alpine
+    working_dir: /app
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@9 --activate &&
+             pnpm install --store-dir=/pnpm-store && pnpm dev"
+    environment:
+      API_PROXY_TARGET: http://api:4000
+      npm_config_store_dir: /pnpm-store
+    volumes:
+      - ./lex-control-client:/app
+      - lex-client-node-modules:/app/node_modules
+      - lex-client-next:/app/.next
+      - pnpm-store:/pnpm-store
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api
+
+volumes:
+  lex-api-node-modules:
+  lex-admin-node-modules:
+  lex-client-node-modules:
+  lex-admin-next:
+  lex-client-next:
+  pnpm-store: # single shared pnpm store across the 3 containers

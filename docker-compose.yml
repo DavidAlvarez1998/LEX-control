@@ -1,0 +1,53 @@
+# LEX Control — PROD stack. Built, immutable images (no source mounts).
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# No MySQL container: the API connects to the EXTERNAL database via DATABASE_URL
+# (set in lex-control-api/.env, along with JWT_SECRET, CORS_ORIGINS, CLIENT_URL,
+# ADMIN_URL = real public origins). Containers do NOT auto-migrate; apply schema
+# changes manually with `pnpm push` against the target DB (DB is push-managed,
+# never `prisma migrate dev` — that resets it).
+name: lex-control
+
+services:
+  api:
+    build:
+      context: ./lex-control-api
+    restart: unless-stopped
+    env_file:
+      - ./lex-control-api/.env
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+    expose:
+      - "4000"
+    # Reaching the internal notifications host (10.10.10.211:5020) requires the
+    # Docker host to have a route to that subnet. Verify on first prod smoke test.
+
+  admin:
+    build:
+      context: ./lex-control-admin
+      args:
+        # Baked into the build (Next rewrites are build-time); points at the api service.
+        API_PROXY_TARGET: http://api:4000
+    restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: http://api:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ./lex-control-client
+      args:
+        API_PROXY_TARGET: http://api:4000
+    restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: http://api:4000
+    ports:
+      - "3001:3001"
+    depends_on:
+      api:
+        condition: service_healthy
