@@ -137,9 +137,22 @@ impulsos → [liquidacionCredito + avaluoRemate si vía remate] → terminacion 
 - **Rama CONTESTA = Sí** → continúa hacia la **audiencia única del art. 392 CGP**
   (en mínima cuantía con excepciones, el ejecutivo se tramita por verbal sumario y
   la audiencia única resuelve excepciones y dicta sentencia):
-  - `requeridosSi (contesto = Sí)`: `excepcionesPropuestas`, `fechaAudiencia`,
-    `sentenciaExcepciones` (select: *Prosperan* / *No prosperan*) + docs
-    **`excepciones.pdf`**, **`acta-audiencia.pdf`**, **`sentencia.pdf`**.
+  - `(contesto = Sí)`: `excepcionesPropuestas`, `fechaAudiencia` (audiencia art. 392),
+    y la cadena de la sentencia en orden legal:
+    - `huboSentencia` (select Sí/No) — ¿ya se dictó sentencia? Visible con `contesto = Sí`.
+    - `decisionExcepciones` (textoLargo: motivación) — visible si `contesto = Sí` **y**
+      `huboSentencia = Sí`.
+    - `sentenciaExcepciones` (select *Prosperan* / *No prosperan* — resultado dispositivo
+      que enruta el flujo: prosperan → `terminado_excepciones`; no prosperan →
+      impulsos/remate) — visible si `contesto = Sí` **y** `huboSentencia = Sí` (gate
+      estricto). El motor lee el VALOR aunque el campo esté oculto, así que impulsos/
+      terminación siguen funcionando aunque la sentencia no se muestre.
+    Docs: **`excepciones.pdf`**, **`acta-audiencia.pdf`**, **`sentencia.pdf`**.
+  - **Anclaje de sección (ficha):** los 5 campos van en `reglas.camposRequeridos` de
+    la etapa `audiencia` para que la ficha (que agrupa por etapa) los muestre juntos en
+    el bloque "Audiencia". GOTCHA: un campo `soloFicha` que NO esté en los
+    `camposRequeridos`/condiciones de su etapa hereda la sección de su campo de
+    `mostrarSi` y puede salir en otro bloque (p. ej. bajo "Mandamiento de pago").
   - Plazo excepciones: 10 días hábiles desde `fechaNotificacion`.
   - *(Cambio: antes la rama "Contesta → audiencia/excepciones" no tenía
     materialización real y todo se diluía en impulsos. Ahora hay campos y docs del
@@ -314,7 +327,7 @@ radicado) · `oficios-cautelares.pdf` · `mandamiento-pago.pdf` ·
   - calificación/subsanación: `causalInadmision`.
   - notif. cautelares: `entidadesOficiadas`.
   - mandamiento/audiencia: `contesto`, `excepcionesPropuestas`, `fechaAudiencia`,
-    `sentenciaExcepciones`.
+    `huboSentencia`, `decisionExcepciones`, `sentenciaExcepciones`.
   - impulsos/remate: `descripcionImpulso`, `valorLiquidacion`, `valorAvaluo`,
     `fechaRemate`.
   - terminación: `motivoTerminacion`, `fechaTerminacion` + flags `esPagoTotal`,
