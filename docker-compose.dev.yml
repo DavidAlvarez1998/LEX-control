@@ -29,6 +29,13 @@ services:
       # Force the pnpm store to the shared volume for EVERY pnpm command (not just
       # install), so it never falls back to /app/.pnpm-store inside the project dir.
       npm_config_store_dir: /pnpm-store
+      # Hot reload through the bind mount: `tsx watch` (chokidar) no recibe los eventos
+      # inotify del host a través del volumen Docker, así que NO recargaba al cambiar el
+      # código del API (había que reiniciar el contenedor a mano). El polling sí detecta
+      # los cambios. tsx 4.x respeta CHOKIDAR_USEPOLLING. (next dev del admin/client ya
+      # recarga por su cuenta, por eso solo el API lo necesita.)
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "400"
     volumes:
       - ./lex-control-api:/app
       - lex-api-node-modules:/app/node_modules
