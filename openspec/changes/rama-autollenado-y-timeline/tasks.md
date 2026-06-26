@@ -1,5 +1,13 @@
 # Tasks
 
+> **Estado real (2026-06-26, verificado contra el código).** Las checkboxes de abajo
+> quedaron desactualizadas. Resumen: **§1 y §2 (backend) = HECHO** (motor data-driven,
+> `derivarDesdeActuaciones`, `posicionarEtapaPorRama`, env `RAMA_AUTOPOSICION`, mapeo
+> sembrado + parcheado en v44, fix del test §7). **PENDIENTE** = los 3 workstreams de
+> cierre en §8 (refactor de granularidad, UI de hitos, spec de vencimientos + smoke).
+> O1 resuelto (encode en `nota`); O2 se cierra en WS-B. Plan detallado en `design.md`
+> → "Plan de cierre — sesión 2026-06-26".
+
 ## 0. Decisions to close before coding
 - [ ] O1: `EtapaHistorial.origen` enum (`MANUAL`|`RAMA`) vs. encode in `nota`.
 - [ ] O2: surface Rama-vs-lawyer date divergence in the timeline (non-blocking hint).
@@ -70,6 +78,34 @@
       one-per-(stage,field) so `fechaMandamiento` + `fechaNotificacion` can both
       autofill in a single sync (see design "Known limitation"). NOT required to
       green the build.
+
+## 8. Plan de cierre — 3 workstreams (ver `design.md`)
+
+### WS-A — `detectarHitos`: one-per-(stage, campo) [backend, acotado] ✅
+- [x] `hitos-actuaciones.ts`: clave de dedup `etapaKey|fechaCampo??valorCampo??_`;
+      N hitos por etapa, pero mismo destino sigue colapsando.
+- [x] Test: "mandamiento + notificación → AMBAS fechas sugeridas".
+- [x] Test: "dos actuaciones al mismo campo → una sola (la más reciente)".
+
+### WS-B — Consciencia de la Rama en la ficha [cliente+api] — cierra O2 y §3 ✅
+> Reescopeado: el equipo había quitado el panel "¿avanzar?" a propósito (el sync
+> autollena solo). NO se reintroduce; solo se hace VISIBLE lo ya derivado.
+- [x] Enriquecer `ActuacionesJuzgado` sin Card nueva ni CTA de "aplicar".
+- [x] `getSugerenciasActuaciones` (antes muerto) ahora retorna `{ hitos, divergencias }`.
+- [x] Transparencia: "✓ La Rama completó: <campos>" (de `camposRamaCsv`/P8).
+- [x] Etapa: "El juzgado ya va en <etapa>" cuando va por delante (solo consciencia).
+- [x] **O2:** hint ámbar no bloqueante con las fechas Rama-vs-abogado (no pisa). Nueva
+      función pura `divergenciasRama` + 2 tests.
+- [x] Doc-chip: descartado (lo cubre `DocumentosRama`); no se infló el DTO.
+- [x] CTA "Aplicar sugerencias": **descartado** (contradecía la decisión del equipo).
+
+### WS-C — Spec `proceso-vencimientos` + verificación
+- [x] `specs/proceso-vencimientos/spec.md` (delta): "posicionada por Rama" vs
+      "confirmada", docs pendientes, consciencia O2 (Given/When/Then, RFC-2119).
+- [x] `tsc` api+client verde; `pnpm test` verde (510/510, +4 casos nuevos).
+- [ ] **Smoke en radicado real** (manual, lo hace el usuario): autollenado de fechas +
+      transparencia "La Rama completó" + aviso de etapa + hint de divergencia. Confirmar
+      de paso el texto real de la notificación (ver `design.md` → hallazgo de ordering).
 
 ## 6. Memory / docs
 - [ ] On completion, archive into `openspec/specs/` and update MEMORY.md pointer.

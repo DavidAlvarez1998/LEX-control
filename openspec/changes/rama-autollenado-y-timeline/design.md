@@ -187,3 +187,94 @@ only the first-processed one's date is suggested, the other is dropped. Acceptab
 now (each is a separate prefill the lawyer can complete), but if both must autofill in
 one sync the "one-per-stage" model has to become "one-per-(stage,field)". Tracked
 here; not required to green the build.
+
+---
+
+# Plan de cierre — sesión 2026-06-26 (3 workstreams)
+
+Estado real verificado contra el código (las checkboxes de `tasks.md` estaban
+desactualizadas): el **backend está hecho** (motor data-driven, `derivarDesdeActuaciones`,
+`posicionarEtapaPorRama`, env `RAMA_AUTOPOSICION`, mapeo sembrado+parcheado en v44, fix
+del test). Falta: el refactor de granularidad, la **UI de hitos** y el spec delta de
+vencimientos. Tres workstreams independientes, en orden de costo creciente.
+
+## WS-A — Refactor `detectarHitos`: one-per-stage → one-per-(stage, campo)
+
+**Por qué:** `mandamientoPago` ya mapea dos fechas (`fechaMandamiento`,
+`fechaNotificacion`). Hoy `detectarHitos` deduplica por etapa
+(`hitos-actuaciones.ts:106` `if (porEtapa.has(regla.etapaKey)) continue;`), así que
+una sola actuación por etapa sobrevive y la otra fecha se pierde.
+
+**Diseño:**
+- Cambiar la clave de dedup de `etapaKey` a **`etapaKey + "|" + (fechaCampo ?? valorCampo ?? "_")`**:
+  una sugerencia por (etapa, campo-destino), no por etapa. Mantener "la primera gana"
+  por cada clave (la actuación más reciente, que llega primero).
+- `SugerenciaHito` no cambia de forma; ahora puede haber **N por etapa**.
+- **Impacto a revisar (no romper):**
+  - `derivarDesdeActuaciones` (extrae `campos`): se beneficia directo — ahora llena
+    ambas fechas. ✓
+  - `etapaMasAvanzada` (posicionamiento): ya colapsa por `orden`, varios hitos de la
+    misma etapa son inocuos (toma el de mayor orden). Verificar con un test. ✓
+  - **Endpoint `/sugerencias`** y la futura UI: ahora la lista puede traer 2 hitos de
+    `mandamientoPago`. La UI debe agrupar por etapa al render (no asumir 1).
+- **Tests:** caso "llegan mandamiento + notificación → se sugieren AMBAS fechas";
+  caso "dos actuaciones al mismo campo → una sola sugerencia (la más reciente)". HECHO
+  (9/9 hitos, 508/508 suite).
+- **Hallazgo (ordering, a confirmar en smoke WS-C):** `reglas.find` es ordenado, así
+  que un texto *"Notificación **del mandamiento** de pago"* hoy lo captura la regla
+  `MANDAMIENTO` (antes que `NOTIFICAC`) → llena `fechaMandamiento`, no `fechaNotificacion`.
+  Si la Rama nombra así la notificación, mover `NOTIFICAC` **antes** de `MANDAMIENTO` en
+  el mapeo (y legacy). No reordenar a ciegas: confirmar contra el texto real del radicado
+  de prueba antes de tocar seed+DB.
+
+## WS-B — UI de hitos en la ficha (§3, reescoped)
+
+**Hallazgo:** NO es de cero. Ya existe `ActuacionesJuzgado`
+(`procesos/[id]/page.tsx:649-850`): lista plana fecha+título, badge "nueva", botones
+"Actualizar"/"Marcar vistas". Y `getSugerenciasActuaciones` está **importado pero nunca
+se llama** (`procesos-api.ts` ya expone el tipo y la función). El gap real es
+**superficiar las sugerencias**, no construir un timeline nuevo.
+
+**Diseño (enriquecer el componente existente, sin Card nueva ni tabs):**
+1. **Panel de sugerencias** arriba de la lista: llamar `getSugerenciasActuaciones(id)`
+   al cargar/tras sync. Por cada hito, una fila accionable:
+   *"`etapaNombre` — prellenar `campoFecha`=`fechaSugerida`"* (y/o `campoValor`=`valorSugerido`),
+   con la actuación que lo disparó. Agrupar por etapa (WS-A puede dar 2 por etapa).
+2. **CTA "Aplicar sugerencias"** (batch): aplica los hitos a `datos` vía
+   `actualizarDatos` (solo-si-vacío, misma semántica que el sync). Reusa el patrón de
+   `DatosProceso`. Tras aplicar, recargar y re-pedir sugerencias (deben desaparecer las
+   ya cubiertas — el motor las omite con el guard "campo lleno").
+3. **Badge de actuación mapeada** en cada ítem de la lista: si la actuación coincide
+   con un hito, chip discreto "→ `etapaNombre`" (consciencia visual de qué movió qué).
+4. **Doc chip** (`conDocumentos`): el `ActuacionItem` actual NO trae `conDocumentos`;
+   la importación de documentos vive aparte en `DocumentosRama`. **Decisión:** dejar el
+   doc-chip fuera de alcance de este WS (ya cubierto por `DocumentosRama`); no inflar el
+   DTO de actuaciones por un chip.
+5. **O2 (divergencia de fechas):** si un hito sugiere una fecha para un campo que **ya
+   tiene** un valor distinto cargado por el abogado, mostrar un hint **no bloqueante**
+   *"la Rama dice `fechaSugerida`"* (sin pisar). Implementarlo como variante de la fila
+   de sugerencia (estado "informativo" en vez de "aplicable"). Esto **cierra O2**.
+
+**No tocar:** el panel canónico `BotonActualizarRama` (sync masivo) queda igual; esta
+superficie es la *per-proceso*.
+
+## WS-C — Spec delta `proceso-vencimientos` (§4) + verificación
+
+- Crear `specs/proceso-vencimientos/spec.md` (delta): "etapa **posicionada por Rama**"
+  vs "etapa **confirmada** por el abogado", y la semántica de documentos que siguen
+  pendientes aunque la Rama haya posicionado (ya implementada; falta el contrato escrito
+  Given/When/Then, RFC-2119).
+- **Verificación (§5):** `tsc` api+client verde; `pnpm test` (api) verde con los nuevos
+  casos de WS-A; smoke en un radicado real del autollenado + el panel de sugerencias +
+  "Aplicar sugerencias".
+
+## Orden de ejecución sugerido
+WS-A (backend acotado + tests) → WS-B (UI, depende de que A dé la granularidad correcta)
+→ WS-C (spec + smoke). Cada WS es commiteable por separado.
+
+## Decisiones cerradas en esta sesión
+- **O1** (`EtapaHistorial.origen` enum vs nota): resuelto por **encode in `nota`**
+  (`posicionarEtapaPorRama` ya escribe `EtapaProceso.nota = "Posicionado
+  automáticamente…"`). No se agrega enum/columna.
+- **Doc-chip en actuaciones:** fuera de alcance (lo cubre `DocumentosRama`).
+- **O2:** se implementa como hint no bloqueante en el panel de sugerencias (WS-B.5).
