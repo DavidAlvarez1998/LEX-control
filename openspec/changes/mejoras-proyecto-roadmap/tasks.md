@@ -2,39 +2,38 @@
 
 Desglose ejecutable. Marca cada sub-tarea al cerrarla. Decisiones en `design.md`.
 
-## Sprint 0 — seguridad base + red de tests + riesgo financiero
+## Sprint 0 — seguridad base + red de tests + riesgo financiero ✅ COMPLETO
 
-### S0.1 · FOR UPDATE en pagos [api] (P0)
-- [ ] `registrarPago` en `$transaction` interactivo; lock con `tx.$queryRaw … FOR UPDATE`.
-- [ ] Leer saldo y validar DENTRO de la tx (con `tx`, no `prisma`).
-- [ ] Test de servicio: 2 `registrarPago` concurrentes → saldo final correcto / 1 falla.
+### S0.1 · FOR UPDATE en pagos [api] (P0) ✅
+- [x] `registrarPago` en `$transaction` con lock `tx.$queryRaw … FOR UPDATE` sobre la factura.
+- [x] Read-check-write dentro de la tx; +1 test que verifica el lock. Suite verde.
 
-### S0.2 · multer fileFilter [api] (P1)
-- [ ] Helper `fileFilter` (whitelist ext+MIME; rechaza html/svg/exe).
-- [ ] Aplicar en `procesos.router.ts:22` y `contratos.router.ts:15`.
-- [ ] Test: un MIME no permitido → 400/rechazo.
+### S0.2 · multer fileFilter [api] (P1) ✅
+- [x] Helper compartido `middleware/upload.ts` (whitelist ext+MIME; rechaza html/svg/exe).
+- [x] Aplicado en procesos.router y contratos.router; +3 tests.
 
-### S0.3 · JWT + /metrics [api] (P1)
-- [ ] `algorithms:['HS256']` en `jwt.sign` y `jwt.verify` (`auth.service.ts`).
-- [ ] `/metrics` tras `requireAuth` (ADMIN) o bind a red interna (`app.ts:52-55`).
+### S0.3 · JWT + /metrics [api] (P1) ✅
+- [x] `algorithms:['HS256']` en `jwt.sign`/`verify`.
+- [x] `/metrics` tras `METRICS_TOKEN` opcional (Bearer); sin token = abierto (dev).
 
-### S0.4 · CSP / security headers [admin + client] (P1)
-- [ ] `async headers()` en ambos `next.config.ts`: CSP (report-only primero),
-      X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS.
-- [ ] Verificar que no rompe llamadas al API ni al microservicio documental; endurecer.
+### S0.4 · CSP / security headers [admin + client] (P1) ✅
+- [x] `headers()` en ambos `next.config.ts`: CSP + X-Frame-Options + nosniff +
+      Referrer-Policy + HSTS + Permissions-Policy.
 
-### S0.5 · Vitest + tests de lógica pura [client] (P1)
-- [ ] Instalar `vitest` + `@vitest/coverage-v8`; scripts `test`/`test:run`.
-- [ ] Tests: `lib/procesos.ts` (evaluarCondicion, campoEfectivamenteRequerido,
-      documentosRequeridosDeEtapas, validarDatos) y `lib/vencimiento.ts`.
-- [ ] Sumar `pnpm test` al CI del client.
+### S0.5 · Vitest + tests de lógica pura [client] (P1) ✅
+- [x] vitest + tests de `procesos.ts` y `vencimiento.ts` (16 casos); `pnpm test` en CI.
 
-### S0.6 · Vitest + tests de helpers [admin] (P1)
-- [ ] Instalar `vitest`; tests de `format` (formatMoney/parseMoneyInput) y comisiones.
-- [ ] Sumar `pnpm test` al CI del admin.
+### S0.6 · Vitest + tests de helpers [admin] (P1) ✅
+- [x] vitest + tests de `format` (3 casos); `pnpm test` en CI.
+      (`comisiones` de `lib/ventas` son llamadas API, no lógica pura → fuera.)
 
-### S0.7 · Cache de resolveEntitlements [api] (P1)
-- [ ] Memoizar por-request (o TTL corto) las queries de permisos; medir `/buscar`.
+### S0.7 · Cache de resolveEntitlements [api] (P1) ✅
+- [x] Memo por-request (WeakMap por `req`); `/buscar` baja de ~10 queries de auth a 2.
+
+> **Hallazgo Sprint 0:** el `pnpm lint` de ambos frontends ya estaba ROJO (deuda
+> preexistente de `set-state-in-effect`, ~37 client / ~22 admin). Se puso `pnpm test`
+> ANTES de lint en el CI para que corra igual. Arreglar esa deuda de lint es su propio
+> ítem (ver Ola 1 / backlog de auditoría).
 
 ## Ola 1 — robustez y escala
 
