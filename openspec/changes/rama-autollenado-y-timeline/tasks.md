@@ -55,5 +55,18 @@
 - [ ] Confirm a second radicado mid-process positions correctly and leaves docs pending.
 - [ ] Smoke the timeline + batch apply in the client ficha.
 
+## 7. Fix red test — missing legacy notification rule (CI blocker)
+> Root cause + decision in `design.md` → "Defect — red unit test". 1-line fix.
+- [ ] Add to `REGLAS_LEGACY` (`hitos-actuaciones.ts`), right after the `MANDAMIENTO`
+      rule: `{ etapaKey: "mandamientoPago", actuacion: ["NOTIFICAC"], fechaCampo: "fechaNotificacion" }`.
+- [ ] `pnpm test hitos-actuaciones` → 7/7 green; `pnpm test` → full suite green (506).
+- [ ] (Spec) the legacy fallback is transitional, so no spec delta needed; the
+      data-driven `mapeoActuaciones` of the ejecutivo should ALSO carry the
+      notification→`fechaNotificacion` rule (cross-check against §1 seed task).
+- [ ] (Follow-up, separate) lift `detectarHitos` from one-suggestion-per-stage to
+      one-per-(stage,field) so `fechaMandamiento` + `fechaNotificacion` can both
+      autofill in a single sync (see design "Known limitation"). NOT required to
+      green the build.
+
 ## 6. Memory / docs
 - [ ] On completion, archive into `openspec/specs/` and update MEMORY.md pointer.

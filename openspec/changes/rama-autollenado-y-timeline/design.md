@@ -149,3 +149,41 @@ Client-side, on the ficha:
 - **O2:** when an autofilled date conflicts with a lawyer-entered one, we keep the
   lawyer's (only-if-empty). Do we *surface* the divergence in the timeline? Proposed:
   yes, as a non-blocking "Rama dice 2021-05-27" hint, no overwrite.
+
+## Defect — red unit test on `feat/cuenta-clientes` (CI blocker)
+
+`tests/hitos-actuaciones.test.ts` was committed (good — it contradicts the old
+"no test harness → manual" assumption in tasks §5) but one case is **red**, so
+`pnpm test` (vitest, run by CI) fails 1/506 and the pipeline is blocked.
+
+- **Failing case:** `"Envió de Notificación" → { etapaKey: "mandamientoPago",
+  campoFecha: "fechaNotificacion" }` (`hitos-actuaciones.test.ts:36-39`). Got
+  `undefined`.
+- **Root cause:** the case exercises the **legacy fallback** (`mapeo` undefined →
+  `REGLAS_LEGACY`). `REGLAS_LEGACY` has a `mandamientoPago` rule keyed on
+  `"MANDAMIENTO" → fechaMandamiento`, but **no rule for the notification** of the
+  mandamiento. Nothing matches `"NOTIFICACION"`, so `detectarHitos` returns nothing.
+  The accent normalization the test name advertises (`normaliza`, NFD strip) already
+  works; the gap is a **missing mapping rule**, not a normalization bug.
+- **Why fix the impl, not the test:** the ejecutivo's stage *"Mandamiento de pago y
+  notificación al demandado"* really has a `fechaNotificacion` field (live seed), and
+  the Rama really publishes a standalone *"Notificación…"* actuación. Mapping it to
+  `mandamientoPago/fechaNotificacion` is correct domain behavior and adds autofill
+  value. So: **add the legacy rule**, keep the test.
+
+### Decision
+
+Add to `REGLAS_LEGACY`, after the `MANDAMIENTO` rule:
+`{ etapaKey: "mandamientoPago", actuacion: ["NOTIFICAC"], fechaCampo: "fechaNotificacion" }`
+(`"NOTIFICAC"` covers *notificación/notificacion/notificado*; placed **after**
+`MANDAMIENTO` so a text mentioning both prefers the libramiento date.)
+
+### Known limitation (note, out of scope of the red fix)
+
+`detectarHitos` keeps **one suggestion per `etapaKey`** (`porEtapa.has(...) →
+continue`). `mandamientoPago` now has two date fields (`fechaMandamiento`,
+`fechaNotificacion`); when both a *mandamiento* and a *notificación* actuación exist,
+only the first-processed one's date is suggested, the other is dropped. Acceptable for
+now (each is a separate prefill the lawyer can complete), but if both must autofill in
+one sync the "one-per-stage" model has to become "one-per-(stage,field)". Tracked
+here; not required to green the build.
