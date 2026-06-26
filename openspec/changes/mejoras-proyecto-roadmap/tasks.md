@@ -55,8 +55,11 @@ Desglose ejecutable. Marca cada sub-tarea al cerrarla. Decisiones en `design.md`
       devuelven la tabla del tenant + conteos al servidor (campanita/inicio/catálogo).
 - [ ] **O1.4 · admin: reusar `Modal`** en empresas/usuarios/servicios/planes/catálogo +
       consolidar tipos/constantes duplicados (`Jurisdiccion ×3`, `Empresa ×2`, `inputCls`).
-- [ ] **Deuda de lint de los fronts** (`set-state-in-effect`, ~37 client/~22 admin):
-      hoy el CI está rojo en lint. Arreglarla o degradar la regla a warning (decisión).
+- [x] **Deuda de lint de los fronts** — RESUELTO el bloqueo de CI: las reglas del
+      React Compiler (set-state-in-effect, purity, refs, static-components,
+      exhaustive-deps) se degradaron a `warn` en ambos `eslint.config.mjs`. CI verde
+      (0 errores; 40 warnings client / 22 admin). Burn-down de las warnings = deuda
+      abierta (bajarlas archivo por archivo en su momento).
 - [ ] [api] `@vitest/coverage` + script `--coverage` (trivial, cuando se retome).
 
 ## Ola 2 — motor compartido (su propio change)
