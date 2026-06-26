@@ -1,0 +1,49 @@
+change: cuenta-autoservicio-empresa
+artifact_store: openspec
+execution_mode: interactive
+decisions:
+  trigger: user-request # "que 'Crea tu cuenta' de la landing cree de una la Empresa y el Usuario (no mande prospecto al comercial), y mande correo con link de activacion para empezar a trabajar"
+  plan: trial-por-defecto # 2026-06-26 usuario: suscripcion a plan trial (env PLAN_AUTOSERVICIO_CLAVE), no el elegido en el form, no sin-plan
+  comercial: prospecto-ganado-automatico # 2026-06-26 usuario: dejar rastro en funnel/metricas (canal WEB, sin comercial, sin comision)
+  nit_cc: empresa-rfc # 2026-06-26 usuario: un solo campo Nit/cc → Empresa.rfc (sirve NIT de despacho o CC de abogado solo)
+  telefono: usuario-telefono-nuevo # 2026-06-26 usuario: agregar Usuario.telefono (mas correcto que reusar Empresa.telefono)
+  activacion: gate-por-correo # alta inmediata; cuenta inactiva hasta activar via /activar (token 48h, flujo existente)
+  reutiliza:
+    - generateActivationToken/hashActivationToken (auth.service)
+    - activationUrl (usuarios.shared) → client /activar?token=
+    - enviarInvitacionCuenta contexto "empresa" + plantillaInvitacion (notificaciones)
+    - enviarCorreo SES best-effort (correo.client)
+    - setPassword (auth.service) para activar — sin cambios
+    - Empresa.rfc @unique / Empresa.email / Usuario.tarjetaProfesional
+    - Prospecto estado GANADO + empresaId @unique + canalEntrada WEB
+    - Suscripcion + UsuarioRolEmpresa(ADMINISTRADOR)
+    - /publico rate-limit(30/h) + honeypot
+  construye:
+    - POST /publico/solicitud-cuenta reescrito → tx Empresa+Suscripcion(trial)+Usuario(ADMIN,inactivo)+Prospecto GANADO + correo
+    - schema: Usuario.telefono String? (unico cambio; via pnpm push)
+    - client landing "Crea tu cuenta": campos nuevos + quitar selector de plan
+  sin_schema: false # agrega Usuario.telefono (aditivo, nullable)
+  no_reusa_orquestadores: # usa piezas, no createUsuario ni ganarProspecto
+    - createUsuario # asume empresa existente + valida cupos + contexto admin
+    - ganarProspecto # crearia Comision; aqui no hay comercial; orden invertido
+phases:
+  explore: done # mapeado: landing page.tsx (form crea-cuenta), publico (solicitud-cuenta→Prospecto+honeypot+ratelimit), usuarios.createUsuario (token+correo+RolEmpresa), ventas.ganarProspecto, correos-cuenta (SES), schema (Empresa/Usuario/Prospecto/Suscripcion)
+  propose: done
+  design: done # design.md (flujo tx, por que no reusar orquestadores, plan trial+degradacion, schema, zod, anti-abuso)
+  spec: drafted # public-marketing-api (MODIFIED solicitud-cuenta) + public-landing (MODIFIED form crea-cuenta)
+  tasks: done # tasks.md por capa (schema → config/plan → api publico+tests → client landing → verify → cierre)
+  apply: done # 2026-06-26 SIN COMMIT. schema Usuario.telefono (pnpm push aplicado a DEMO-ROUTER). seed-foundations: plan "trial" activo=false (cuotas ADMIN+JURIDICO) sembrado+verificado. env.selfSignupPlanClave. API publico (schemas/repo/service) reescrito: tx Empresa+Suscripcion(trial)+Usuario(ADMINISTRADOR PENDIENTE)+Prospecto GANADO + correo. Client landing form + publico-api.ts
+  verify: tests+tsc+build # API vitest 518/518 + tsc API verde. Client tsc+eslint(0 errores)+next build verde. PENDIENTE: smoke real (form→correo SES→/activar→login)
+  archive: pending
+capabilities:
+  added: []
+  modified:
+    - public-marketing-api
+    - public-landing
+fuera_de_alcance:
+  - aprobacion manual del admin (alta es inmediata; gate = activacion por correo)
+  - cobro/upgrade del plan (nace trial)
+  - captcha real (sigue honeypot + rate-limit)
+  - Comision para el Prospecto GANADO (no hay comercial)
+  - reemplazar POST /publico/contacto ("Habla con un asesor")
+next: IMPLEMENTADO+VERIFICADO (tests/tsc/build), SIN COMMIT. Falta: smoke real (form en :3001 → correo SES → /activar → login como ADMINISTRADOR de la empresa nueva) y commit por capas (api / client) en rama feat/cuenta-clientes.
