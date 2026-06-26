@@ -1,0 +1,59 @@
+# Tasks
+
+## 0. Decisions to close before coding
+- [ ] O1: `EtapaHistorial.origen` enum (`MANUAL`|`RAMA`) vs. encode in `nota`.
+- [ ] O2: surface Rama-vs-lawyer date divergence in the timeline (non-blocking hint).
+- [ ] Confirm the ejecutivo date/decision field keys to prefill
+      (`fechaMandamiento`, `fechaCautelares`/`fechaEmbargo`, `fechaSentencia`,
+      `fechaTerminacion`, `decisionCalificacion`, …) against the live v42 schema.
+
+## 1. Mapping is data (`mapeoActuaciones`)
+- [ ] Define `mapeoActuaciones` rule shape + matching semantics (actuacion OR
+      anotacion, `excluir` negation, order-sensitive) in `specs/rama-judicial/spec.md`.
+- [ ] Rewrite `hitos-actuaciones.ts`:
+  - [ ] Read per-tipo `mapeoActuaciones`; legacy `REGLAS` only as fallback.
+  - [ ] Normalize + match on `actuacion` **and** `anotacion`.
+  - [ ] Apply `excluir` (fixes `NIEGA terminación` / `traslado` false-fire).
+  - [ ] Keep the "field exists + empty in `datos`" guard.
+- [ ] Seed the ejecutivo `mapeoActuaciones` (radicación, calificación admite/inadmite,
+      mandamiento, cautelares, embargo, seguir-adelante=sentencia, liquidación,
+      avalúo/remate, terminación by pago).
+- [ ] Patch the **live v42** tipo record surgically (DB ahead of seed) **and** update
+      `seed-tipos.json`. Do **not** re-run `pnpm seed:catalogo` (would clobber live edits).
+
+## 2. Derivation + autofill + positioning (API)
+- [ ] `derivarDesdeActuaciones(actuaciones, tipo, datos)` → `{ campos, etapaDestino, hitos }`.
+- [ ] `etapaDestino` = furthest stage by `orden` with `disponibleSi` true, only forward.
+- [ ] Extend `sincronizarProceso`: `fijar()` all `campos`; if `etapaDestino`, call
+      `posicionarEtapaPorRama`.
+- [ ] `posicionarEtapaPorRama(tx, proceso, etapaDestino)`:
+  - [ ] Never auto-retrocede; create `EtapaHistorial` (origen RAMA); set `etapaActual`,
+        recompute `fechaLimite`, set terminal `estado` when the stage is terminal.
+  - [ ] **Skip** `camposRequeridos`/`documentosRequeridos` validation (docs stay pending).
+- [ ] Env kill-switch `RAMA_AUTOPOSICION` (on by default; `off` = autofill-only).
+- [ ] Ensure `moverEtapa` (manual) keeps full documental gating unchanged.
+
+## 3. Timeline UI (client)
+- [ ] `LineaTiempoActuaciones` on the ficha: dated, newest-first, all actuaciones.
+- [ ] Badge mapped actuaciones (stage + prefilled field); doc chip when `conDocumentos`.
+- [ ] Header CTA "Aplicar sugerencias" (batch apply remaining `hitos`).
+- [ ] Show documental requirements still pending for a Rama-positioned stage.
+- [ ] Keep bulk sync on the canonical `BotonActualizarRama` panel (unchanged).
+
+## 4. Specs
+- [ ] `specs/rama-judicial/spec.md` delta: mapping contract, autofill, positioning,
+      negation, anotacion matching (Given/When/Then, RFC-2119).
+- [ ] `specs/proceso-vencimientos/` delta: "stage positioned by Rama" vs "confirmed",
+      docs-pending semantics.
+
+## 5. Verify (no test harness → manual)
+- [ ] `tsc` green in api + client.
+- [ ] Re-run against `66001400300320210022500`: expect mandamiento, cautelares,
+      embargo, seguir-adelante, liquidación, terminación-por-pago detected;
+      `niega/traslado terminación` **not** firing terminación; `etapaActual` lands on
+      `terminacion` with the terminación auto's date prefilled.
+- [ ] Confirm a second radicado mid-process positions correctly and leaves docs pending.
+- [ ] Smoke the timeline + batch apply in the client ficha.
+
+## 6. Memory / docs
+- [ ] On completion, archive into `openspec/specs/` and update MEMORY.md pointer.
