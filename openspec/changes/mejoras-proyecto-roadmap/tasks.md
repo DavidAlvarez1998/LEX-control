@@ -35,26 +35,29 @@ Desglose ejecutable. Marca cada sub-tarea al cerrarla. Decisiones en `design.md`
 > ANTES de lint en el CI para que corra igual. Arreglar esa deuda de lint es su propio
 > ítem (ver Ola 1 / backlog de auditoría).
 
-## Ola 1 — robustez y escala
+## Ola 1 — robustez y escala (parcial)
 
-### O1.1 · $transaction en importarPartesRama [api] (P1)
-- [ ] Envolver litigante + parteProceso en una tx (`actuaciones.service.ts:540-545`).
+### O1.1 · $transaction en importarPartesRama [api] (P1) ✅
+- [x] litigante + parteProceso en una tx por sujeto (revierte huérfano si falla la 2ª).
 
-### O1.2 · zod en bordes JSON [api] (P1)
-- [ ] Accesores `etapasDe/esquemaDe/mapeoDe(tipo)` con `parse` zod en el borde.
-- [ ] Migrar los ~13 `as unknown as`; validar el contrato de la Rama al parsear.
+### O1.4 · P2 chicos (los seguros — HECHOS)
+- [x] [client] inicio: `.catch(()=>{})` → `errorCarga` + banner "Reintentar".
+- [x] [api] N+1 cartera → `conSaldoBatch` con `groupBy` (2 queries vs N).
+- [x] [client] Memoizar el cálculo estructural de niveles en `formulario-dinamico` (144 campos).
+- [ ] [admin] `key={i}` → keys estables (pendiente; con el de tipos abajo).
 
-### O1.3 · Paginación universal [api + front] (P1)
-- [ ] `parsePage` en routers procesos/facturacion/litigantes/contratos; `include` estrecho.
-- [ ] Front: consumir `page`; endpoint(s) de conteo para campanita/inicio/catálogo.
-
-### O1.4 · P2 chicos
-- [ ] [client] Sacar `.catch(()=>{})` de dashboards → estado de error; guard de cancelación.
-- [ ] [admin] Reusar `Modal` compartido en empresas/usuarios/servicios/planes/catálogo.
-- [ ] [admin] Consolidar tipos/constantes duplicados; `key={i}` → keys estables.
-- [ ] [api] N+1 cartera → `groupBy` (`cartera.service.ts`, `contable.service.ts`).
-- [ ] [admin+client] Memoizar cómputos por-keystroke/IIFE (`formulario-dinamico`, `datos-proceso`).
-- [ ] [api] `@vitest/coverage` + script `--coverage`.
+### PENDIENTE — cada uno su propio change enfocado (M/L, superficie amplia)
+> Decisión: NO rushear; abrir change por ítem y verificar con cuidado.
+- [ ] **O1.2 · zod en bordes JSON** [api] — 28 sitios `as unknown as` del motor.
+      RIESGO: un zod estricto puede rechazar seed JSON válido → schema LENIENTE
+      (passthrough) + accesores `etapasDe/esquemaDe/mapeoDe`. Migrar gradual.
+- [ ] **O1.3 · Paginación universal** [api + front] — `parsePage` en los routers que
+      devuelven la tabla del tenant + conteos al servidor (campanita/inicio/catálogo).
+- [ ] **O1.4 · admin: reusar `Modal`** en empresas/usuarios/servicios/planes/catálogo +
+      consolidar tipos/constantes duplicados (`Jurisdiccion ×3`, `Empresa ×2`, `inputCls`).
+- [ ] **Deuda de lint de los fronts** (`set-state-in-effect`, ~37 client/~22 admin):
+      hoy el CI está rojo en lint. Arreglarla o degradar la regla a warning (decisión).
+- [ ] [api] `@vitest/coverage` + script `--coverage` (trivial, cuando se retome).
 
 ## Ola 2 — motor compartido (su propio change)
 - [ ] F1: extraer `@lex/motor` (procesos/esquema/etapas) consumido por api+admin+client.
