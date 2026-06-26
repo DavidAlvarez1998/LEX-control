@@ -60,9 +60,12 @@
 - [ ] Add to `REGLAS_LEGACY` (`hitos-actuaciones.ts`), right after the `MANDAMIENTO`
       rule: `{ etapaKey: "mandamientoPago", actuacion: ["NOTIFICAC"], fechaCampo: "fechaNotificacion" }`.
 - [ ] `pnpm test hitos-actuaciones` → 7/7 green; `pnpm test` → full suite green (506).
-- [ ] (Spec) the legacy fallback is transitional, so no spec delta needed; the
-      data-driven `mapeoActuaciones` of the ejecutivo should ALSO carry the
-      notification→`fechaNotificacion` rule (cross-check against §1 seed task).
+- [x] (Spec) the legacy fallback is transitional, so no spec delta needed; the
+      data-driven `mapeoActuaciones` of the ejecutivo ALSO carries the
+      notification→`fechaNotificacion` rule. Added with `excluir`
+      `["ESTADO","SENTENCIA","EDICTO","EMPLAZA"]` (avoid notif-by-estado / of the
+      sentencia / edicto / emplazamiento false-fires) in `seed-tipos.json` AND
+      surgically in the live v44 record (seed:catalogo does not write this column).
 - [ ] (Follow-up, separate) lift `detectarHitos` from one-suggestion-per-stage to
       one-per-(stage,field) so `fechaMandamiento` + `fechaNotificacion` can both
       autofill in a single sync (see design "Known limitation"). NOT required to
