@@ -40,11 +40,14 @@ correo siguen siendo de identidad/login → los gestiona el admin de empresa).
 - Alternativa considerada: extender `GET/PATCH /auth/me`. Se prefiere
   `/mi-empresa/perfil` para no inflar el contrato de auth (sesión/roles).
 
-### B. Contratos — ver a todo el equipo  → DESCARTADO
-El usuario decidió **dejar la lista de contratos como está** (solo contratos
-creados). El desplegable "Vincular usuario" ya incluye a todo el equipo (incluido
-David Alvarez); para que alguien aparezca en la lista se le crea su contrato.
-Sin cambios.
+### B. Contratos — ver a todo el equipo  → IMPLEMENTADO (roster)
+El usuario, al notar el hueco (Equipo muestra 4 personas pero Contratos 3,
+porque solo 3 tienen contrato creado), pidió **mostrar a todos y marcar a quien
+no tiene contrato**. Se agrega bajo la tabla de contratos una sección **"Equipo
+sin contrato"** que lista los miembros (`/mi-empresa/usuarios`) sin ningún
+contrato vinculado, con badge "Sin contrato" y botón **"Crear contrato"** que
+abre el modal ya vinculado (prefill nombre + correo + tarjeta profesional). Cruce
+en cliente: `miembros − usuarioId con contrato`. Sin cambios de modelo ni de API.
 
 ### C. Contratos — tarjeta profesional en "Datos"  → campo propio del contrato
 - Modelo: agregar `Contrato.tarjetaProfesional String?` (decisión del usuario:
@@ -61,7 +64,8 @@ Sin cambios.
    profesional, teléfono**. Nombre/correo/contraseña los gestiona el admin.
 2. **Tarjeta profesional en el contrato:** **campo propio del contrato**
    (editable; se prellena del usuario al vincular). Requiere columna nueva.
-3. **Equipo en contratos:** **dejar la lista como está** (sin roster).
+3. **Equipo en contratos:** ~~dejar la lista como está~~ → revisado: **sí
+   roster** "Equipo sin contrato" (mostrar todos, marcar a quien falta).
 
 ## Alcance
 

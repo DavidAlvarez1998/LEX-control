@@ -37,8 +37,7 @@ org/
 
 ## Módulos
 
-Lo que hace cada portal (la barra lateral es la guía). El detalle de diseño de cada
-módulo vive en `openspec/` (ver más abajo).
+Lo que hace cada portal (la barra lateral es la guía).
 
 **Admin (`:3000`, rol ADMIN de plataforma):**
 
@@ -67,13 +66,6 @@ módulo vive en `openspec/` (ver más abajo).
 | Contratos | Contratos (RR. HH.) |
 | Equipo | Gestión del equipo del despacho |
 | Mi Cuenta | Perfil del usuario |
-
-## Documentación / source of truth
-
-El diseño, las decisiones y las specs viven en **`openspec/`** (versionado en el repo):
-las propuestas en `openspec/changes/<feature>/` y las specs estables en
-`openspec/specs/`. Es la fuente de verdad — cuando el código cambia, ahí se actualiza.
-Convención completa en `openspec/convenciones-memoria.md`.
 
 ## Requisitos
 
@@ -144,7 +136,7 @@ Abrí `http://localhost:3000`, te redirige a `/login`, entrás con el ADMIN semb
 
 ## Con Docker
 
-Dos stacks de Compose en la raíz del paraguas (ver `openspec/changes/ops-docker/`).
+Dos stacks de Compose en la raíz del paraguas.
 
 ### Dev — todo con un comando
 
@@ -173,7 +165,7 @@ compose de la raíz; los submódulos no se tocan.
 
 > Si querés una base **aislada de juguete** en lugar de la real (pruebas/CI), se
 > puede agregar un servicio `mysql` al compose y apuntarle `DATABASE_URL` —
-> ahí sí `pnpm push` + `pnpm seed:admin` para sembrarla. Ver `openspec/changes/ops-docker`.
+> ahí sí `pnpm push` + `pnpm seed:admin` para sembrarla.
 
 ### Prod — imágenes construidas
 
