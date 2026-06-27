@@ -64,6 +64,13 @@ orquestador. `Prospecto.empresaId` es `@unique` → 1 prospecto por empresa (con
   usuario quepa. El seed de planes debe garantizarlo. Como en el alta creamos el primer y único
   ADMINISTRADOR, no validamos cupo contra el plan en este flujo (la empresa recién nace); el control
   de cupos sigue operando para altas posteriores vía el flujo admin normal.
+- **Alcance del trial (decisión 2026-06-27):** el plan trial da acceso **completo** — TODOS los
+  módulos no-baseline (contable, comercial, contratos, ia_redaccion, logo_personalizado,
+  automatizacion_contratos) y cupos **ilimitados** (`limite = null`) en los 4 roles
+  (ADMINISTRADOR, JURIDICO, CONTABLE, COMERCIAL). Antes era baseline-only + 1 ADMINISTRADOR + 1
+  JURIDICO; se abrió para que el usuario pruebe la plataforma entera sin topar con el muro "Módulo
+  no contratado". Sembrado en `src/seed-foundations.ts` (array `PLANES`). Trade-off conocido: toda
+  alta gratuita recibe todo ilimitado; revisar antes de monetizar el free tier.
 - **Degradación**: si la clave no resuelve, se crea la empresa **sin** suscripción y se loggea
   `[publico] plan autoservicio no encontrado`. El alta NO se bloquea (el usuario igual activa y entra;
   un admin puede asignar plan luego). Se prefiere alta-con-aviso sobre alta-fallida.
